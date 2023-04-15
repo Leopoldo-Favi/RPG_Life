@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:padding="16dp">
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/select_book_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Please select the name of the book" />
+
+        <EditText
+            android:id="@+id/select_book_totPages"
+            android:inputType="number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="How many pages does the book have" />
+
+    </LinearLayout>
+
+
+
+</RelativeLayout>
+

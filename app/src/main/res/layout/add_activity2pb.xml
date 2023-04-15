@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:stretchColumns="*">
+
+    <TableRow xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent" android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent">
+
+
+            <TextView
+                android:id="@+id/level_number_l"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:text="Lv 1">
+
+            </TextView>
+
+            <ProgressBar
+                android:id="@+id/pbl"
+                android:layout_width="match_parent"
+                android:layout_height="240dp"
+                android:layout_column="0"
+                android:layout_weight="0"
+                android:background="@android:color/transparent"
+                android:indeterminateOnly="false"
+                android:max="100"
+                android:progress="0"
+                android:progressDrawable="@drawable/circle_progressbar"
+                android:rotation="-90">
+
+            </ProgressBar>
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="240dp"
+            android:orientation="horizontal">
+
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:text="Lv 1">
+
+            </TextView>
+
+            <ProgressBar
+                android:id="@+id/pbr"
+                android:layout_width="match_parent"
+                android:layout_height="240dp"
+                android:background="@android:color/transparent"
+                android:indeterminateOnly="false"
+                android:max="100"
+                android:progress="30"
+                android:progressDrawable="@drawable/circle_progressbar"
+                android:rotation="-90">
+
+            </ProgressBar>
+
+        </RelativeLayout>
+
+
+    </TableRow>
+
+    <TableRow>
+
+        <TextView
+            android:id="@+id/activiy_name_l"
+            android:text=""
+            android:textAlignment="center"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_column="0"
+            android:layout_weight="0">
+
+        </TextView>
+
+        <TextView
+            android:id="@+id/activiy_name_r"
+            android:text=""
+            android:textAlignment="center"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_column="0"
+            android:layout_weight="0">
+
+        </TextView>
+
+    </TableRow>
+
+</TableLayout>
