@@ -4,7 +4,8 @@
     android:stretchColumns="*">
 
     <TableRow
-        android:layout_width="match_parent" android:layout_height="match_parent">
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:id="@+id/tableRow">
 
         <TextView
             android:id="@+id/book_name"
@@ -25,7 +26,7 @@
             android:gravity="center">
 
             <ProgressBar
-                android:id="@+id/pbr"
+                android:id="@+id/progress"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

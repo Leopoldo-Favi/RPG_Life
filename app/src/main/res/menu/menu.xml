@@ -15,9 +15,8 @@
         app:showAsAction="ifRoom"
         />
     <item
-        android:title="Back"
-        android:icon="@drawable/ic_back"
-        android:id="@+id/merda"
+        android:title="Delete skill"
+        android:id="@+id/delete"
         app:showAsAction="never"
         />
 </menu>

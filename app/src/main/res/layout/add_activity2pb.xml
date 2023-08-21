@@ -46,6 +46,7 @@
 
 
             <TextView
+                android:id="@+id/level_number_r"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@android:color/transparent"
@@ -61,7 +62,7 @@
                 android:background="@android:color/transparent"
                 android:indeterminateOnly="false"
                 android:max="100"
-                android:progress="30"
+                android:progress="0"
                 android:progressDrawable="@drawable/circle_progressbar"
                 android:rotation="-90">
 

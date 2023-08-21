@@ -1,6 +1,8 @@
 package com.example.rpg_life;
 
 import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.view.View;
 import android.widget.TableLayout;
 import android.widget.TextView;
@@ -19,6 +21,13 @@ public class SavedData extends Application {
     public static final Boolean FALSE = Boolean.FALSE;
 
     private String somethingSaved;
+
+    /*private SharedPreferences sharedPreferences;
+
+    public SavedData(Context applicationContext) {
+        // Initialize the SharedPreferences object with the provided Context
+        sharedPreferences = applicationContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
+    }*/
 
     public String getSomethingSaved(){
         return somethingSaved;
@@ -49,17 +58,23 @@ public class SavedData extends Application {
     //ACTIVITIES //ACTIVITIES //ACTIVITIES //ACTIVITIES //ACTIVITIES //ACTIVITIES //ACTIVITIES //ACTIVITIES //ACTIVITIES //ACTIVITIES //ACTIVITIES //ACTIVITIES
     public static final String NAMES_OF_ADDED_VIEWS = "namesOfAddedViews";
     public static final String PROGRESS_OF_ADDED_VIEWS = "progressOfAddedViews";
+    public static final String MAX_PROGRESS_OF_ADDED_VIEWS = "maxProgressOfAddedViews";
     public static final String LEVEL_OF_ADDED_VIEWS = "levelOfAddedViews";
 
 
-    private Set<String> namesOfAddedViews = new HashSet<String>();;
-    private Set<String> progressOfAddedViews = new HashSet<String>();;
-    private Set<String> levelOfAddedViews = new HashSet<String>();;
+    private String namesOfAddedViews = new String();
+    private String progressOfAddedViews = new String();
+    private String maxProgressOfAddedViews = new String();
+    private String levelOfAddedViews = new String();
 
-    public Set<String> getNamesOfAddedViews(){ return namesOfAddedViews; }
-    public Set<String> getProgressOfAddedViews(){ return progressOfAddedViews; }
-    public Set<String> getLevelOfAddedViews(){ return levelOfAddedViews; }
 
+    public String getNamesOfAddedViews(){ return namesOfAddedViews; }
+    public String getProgressOfAddedViews(){ return progressOfAddedViews; }
+    public String getMaxProgressOfAddedViews(){ return maxProgressOfAddedViews; }
+    public String getLevelOfAddedViews(){ return levelOfAddedViews; }
+
+
+    public void setProgressOfAddedViews(String jsonArray){ this.progressOfAddedViews = jsonArray; }
     public void addValueToSet(Set<String> set, String value){ set.add(value); }
 
 }
