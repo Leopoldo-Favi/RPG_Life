@@ -30,6 +30,7 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 
 
@@ -57,7 +58,7 @@ public class MainActivity extends AppCompatActivity{
     Boolean somethingSaved;
     String[] names = {};
     String[] progress = {};
-    int[] maxProgress = {};
+    Integer[] maxProgress = {};
     String[] level = {};
 
     Button b;
@@ -221,7 +222,7 @@ public class MainActivity extends AppCompatActivity{
         names = jsonToStringArray(sharedPreferences.getString(SavedData.NAMES_OF_ADDED_VIEWS, "[]"));
         progress = jsonToStringArray(sharedPreferences.getString(SavedData.PROGRESS_OF_ADDED_VIEWS, "[]"));
         level = jsonToStringArray(sharedPreferences.getString(SavedData.LEVEL_OF_ADDED_VIEWS, "[]"));
-        maxProgress = new Gson().fromJson(sharedPreferences.getString(SavedData.MAX_PROGRESS_OF_ADDED_VIEWS, "[]"), new TypeToken<int[]>() {}.getType()); //questo è praticamente jsonToIntArray ma mi faceva fatica scriverlo
+        maxProgress = new Gson().fromJson(sharedPreferences.getString(SavedData.MAX_PROGRESS_OF_ADDED_VIEWS, "[]"), new TypeToken<Integer[]>() {}.getType()); //questo è praticamente jsonToIntArray ma mi faceva fatica scriverlo
 
         //names.length != 0 prima era somethingSaved
         if(names.length != 0){ //se ci sono activities salvate rimettile in pagina
@@ -245,22 +246,10 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
-    public static int[] addValueToIntArray(int[] array, int newValue) {
-        int[] newArray = new int[array.length + 1];
+    public static <T> T[] addValueToArray(T[] array, T newValue) {
 
-        // Copy existing elements to the new array
-        for (int i = 0; i < array.length; i++) {
-            newArray[i] = array[i];
-        }
-
-        // Add the new value to the end of the new array
-        newArray[newArray.length - 1] = newValue;
-
-        return newArray;
-    }
-
-    public static String[] addValueToStringArray(String[] array, String newValue) {
-        String[] newArray = new String[array.length + 1];
+        Class<?> arrayType = array.getClass().getComponentType();
+        T[] newArray = (T[]) Array.newInstance(arrayType, array.length + 1);
 
         // Copy existing elements to the new array
         for (int i = 0; i < array.length; i++) {
@@ -276,10 +265,10 @@ public class MainActivity extends AppCompatActivity{
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void saveActivityData(SharedPreferences sharedPreferences){
 
-        names = addValueToStringArray(names, actitivyNameView.getText().toString());
-        progress = addValueToStringArray(progress, "0");
-        level = addValueToStringArray(level, "Level 1");
-        maxProgress = addValueToIntArray(maxProgress, 250);
+        names = addValueToArray(names, actitivyNameView.getText().toString());
+        progress = addValueToArray(progress, "0");
+        level = addValueToArray(level, "Level 1");
+        maxProgress = addValueToArray(maxProgress, 250);
 
         //trasformali in json
         String jsonNames = new Gson().toJson(names);

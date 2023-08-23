@@ -1,5 +1,7 @@
 package com.example.rpg_life;
 
+import static com.example.rpg_life.MainActivity.addValueToArray;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -181,35 +183,8 @@ public class SkillActivity extends AppCompatActivity {
         mainProgressBarText.setText(mainProgressBar.getProgress() + "/" + max);
     }
 
-    public static int[] addValueToIntArray(int[] array, int newValue) {
-        int[] newArray = new int[array.length + 1];
 
-        // Copy existing elements to the new array
-        for (int i = 0; i < array.length; i++) {
-            newArray[i] = array[i];
-        }
-
-        // Add the new value to the end of the new array
-        newArray[newArray.length - 1] = newValue;
-
-        return newArray;
-    }
-
-    public static String[] addValueToStringArray(String[] array, String newValue) {
-        String[] newArray = new String[array.length + 1];
-
-        // Copy existing elements to the new array
-        for (int i = 0; i < array.length; i++) {
-            newArray[i] = array[i];
-        }
-
-        // Add the new value to the end of the new array
-        newArray[newArray.length - 1] = newValue;
-
-        return newArray;
-    }
-
-    public <T> T[] removeElementAtIndex(T[] array, int index) { //this doesn't want to work
+    public <T> T[] removeElementAtIndex(T[] array, int index) {
 
         Class<?> arrayType = array.getClass().getComponentType();
         T[] newArray = (T[]) Array.newInstance(arrayType, array.length - 1);
@@ -270,9 +245,9 @@ public class SkillActivity extends AppCompatActivity {
     public void saveBooksData(String title, String bookName, int nPages, SharedPreferences sharedPreferences){
 
         //aggiungi i nuovi valori
-        bookNames = addValueToStringArray(bookNames, bookName);
-        bookPages = addValueToStringArray( bookPages, String.valueOf(nPages));
-        bookProgress = addValueToStringArray(bookProgress, "0"); //tutto parte da 0
+        bookNames = addValueToArray(bookNames, bookName);
+        bookPages = addValueToArray( bookPages, String.valueOf(nPages));
+        bookProgress = addValueToArray(bookProgress, "0"); //tutto parte da 0
 
         //trasformali in json
         String jsonBookNames = new Gson().toJson(bookNames);
