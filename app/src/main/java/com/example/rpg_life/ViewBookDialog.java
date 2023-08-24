@@ -4,6 +4,8 @@ import static com.example.rpg_life.SkillActivity.findStringPosition;
 import static com.example.rpg_life.SkillActivity.jsonToStringArray;
 import static com.example.rpg_life.SkillActivity.saveCurrentBookProgresses;
 import static  com.example.rpg_life.SkillActivity.correctlySetMainPbProgress;
+import static com.example.rpg_life.SkillActivity.checkProgressBar;
+import static com.example.rpg_life.SkillActivity.removeElementAtIndex;
 
 
 import androidx.appcompat.app.AlertDialog;
@@ -22,6 +24,8 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.ProgressBar;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,13 +40,15 @@ public class ViewBookDialog extends DialogFragment {
     private static final String ARG_TOTPAGES = "totPages_key";
     private static final String ARG_BOOKNAMES = "BookNames_key";
     private static final String ARG_BOOKPROGRESS = "BookProgress_key";
+    private static final String ARG_BOOKPPAGES = "BookPages_key";
 
-    static Context context;
+    static SkillActivity context;
 
     String bookName;
     int totPages;
     String[] bookNames;
-    String[] bookProgress;
+    String[] bookProgresses;
+    String[] bookPages;
 
     private SharedPreferences sharedPreferences;
     private SavedActivityData savedActivityData;
@@ -52,8 +58,13 @@ public class ViewBookDialog extends DialogFragment {
     TextView mainProgressBarText;
     TextView levelText;
 
+    int taskCompletedReward = 50;
+
+    TableLayout tl;
+    View bookView;
+
     //prendi dati da skill activity
-    public static ViewBookDialog newInstance(String bookName, int totPages, String[] bookNames, String[] bookProgress) {
+    public static ViewBookDialog newInstance(String bookName, int totPages, String[] bookNames, String[] bookProgress, String[] bookPages) {
         ViewBookDialog fragment = new ViewBookDialog();
         Bundle args = new Bundle();
 
@@ -61,13 +72,14 @@ public class ViewBookDialog extends DialogFragment {
         args.putInt(ARG_TOTPAGES, totPages);
         args.putStringArray(ARG_BOOKNAMES, bookNames);
         args.putStringArray(ARG_BOOKPROGRESS, bookProgress);
+        args.putStringArray(ARG_BOOKPPAGES, bookPages);
         fragment.setArguments(args);
 
         return fragment;
     }
 
     //prendi dati da skillActivity
-    public void setReferences(SharedPreferences sharedPreferences, SavedActivityData savedActivityData, Context context, ProgressBar progressBar, ProgressBar mainProgressBar, TextView mainProgressBarText, TextView levelText){
+    public void setReferences(SharedPreferences sharedPreferences, SavedActivityData savedActivityData, SkillActivity context, ProgressBar progressBar, ProgressBar mainProgressBar, TextView mainProgressBarText, TextView levelText, TableLayout tl, View bookView){
         this.sharedPreferences = sharedPreferences;
         this.savedActivityData = savedActivityData;
         this.context = context;
@@ -75,6 +87,8 @@ public class ViewBookDialog extends DialogFragment {
         this.mainProgressBar = mainProgressBar;
         this.mainProgressBarText = mainProgressBarText;
         this.levelText = levelText;
+        this.tl = tl;
+        this.bookView = bookView;
     }
 
     @Override
@@ -85,8 +99,10 @@ public class ViewBookDialog extends DialogFragment {
         // Retrieve data from arguments
         bookName = getArguments().getString(ARG_BOOKNAME);
         totPages = getArguments().getInt(ARG_TOTPAGES);
+
         bookNames = getArguments().getStringArray(ARG_BOOKNAMES);
-        bookProgress = getArguments().getStringArray(ARG_BOOKPROGRESS);
+        bookProgresses = getArguments().getStringArray(ARG_BOOKPROGRESS);
+        bookPages = getArguments().getStringArray(ARG_BOOKPPAGES);
 
         //make the data visible by puttin it in the views
         TextView dialogTitle = (TextView) rootView.findViewById(R.id.dialog_title);
@@ -95,7 +111,7 @@ public class ViewBookDialog extends DialogFragment {
         //progress bar stuff
         final ProgressBar dialogProgressBar = (ProgressBar) rootView.findViewById(R.id.dialog_progress_bar);
         dialogProgressBar.setMax(totPages); //set the number of pages in the progress bar
-        int progress = Integer.parseInt( bookProgress[findStringPosition(bookNames, bookName)] );
+        int progress = Integer.parseInt( bookProgresses[findStringPosition(bookNames, bookName)] );
         dialogProgressBar.setProgress(progress); //also set the progress
         TextView dialogTextView = (TextView) rootView.findViewById(R.id.dialog_text_view);
         dialogTextView.setText(progress + "/" + totPages); //set it also in the textview
@@ -121,9 +137,59 @@ public class ViewBookDialog extends DialogFragment {
         return rootView;
     }
 
+    public void checkTaskCompleted(ProgressBar pb, Context context){
+
+        if(checkProgressBar(pb)){
+
+            Toast toast = Toast.makeText(context /* SkillActivty */, "Hai finito la task!!!!", Toast.LENGTH_SHORT);
+            toast.show();
+
+            correctlySetMainPbProgress(mainProgressBar.getProgress() + taskCompletedReward, context); //exp reward
+
+            //delete task data
+            int position = findStringPosition(bookNames, bookName);
+            bookNames = removeElementAtIndex(bookNames, position);
+            bookProgresses = removeElementAtIndex(bookProgresses, position);
+            bookPages = removeElementAtIndex(bookPages, position);
+
+            String jsonBookNames = new Gson().toJson(bookNames);
+            String jsonBookProgress = new Gson().toJson(bookProgresses);
+            String jsonBookPages = new Gson().toJson(bookPages);
+
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(SavedActivityData.NAMES_OF_ADDED_BOOKS, jsonBookNames);
+            editor.putString(SavedActivityData.CURRENT_BOOK_PROGRESSES, jsonBookProgress);
+            editor.putString(SavedActivityData.PAGES_OF_ADDED_BOOKS, jsonBookPages);
+            editor.apply();
+            //delete task data
+
+            //CallLoadSharedPreferences caller = (CallLoadSharedPreferences) context;
+            //caller.callLoadSharedPreferences();
+            tl.removeView(bookView); //once u have completed the task remove it
+            this.dismiss(); //dismiss the dialog, manca solo di far partire loadSharedPreferences di
+        }
+    }
 
 
+    public void makeProgressChange(int progress, int mainProgressBarProgress, TextView dialogTextView, final ProgressBar pb1, final ProgressBar pb2){
 
+        //set the numbers everywhere
+        pb1.setProgress(progress);
+        pb2.setProgress(progress);
+        dialogTextView.setText(pb1.getProgress() + "/" + totPages);
+        correctlySetMainPbProgress(mainProgressBarProgress, context);
+        checkTaskCompleted(pb1, context);
+
+        //save the new numbers
+        if(!checkProgressBar(pb1)){//se la task non è completa (otherwise it throws an error)
+
+            int posToChange = findStringPosition(bookNames, bookName);
+            bookProgresses[posToChange] = String.valueOf(pb1.getProgress());
+            saveCurrentBookProgresses(  new Gson().toJson(bookProgresses), savedActivityData, sharedPreferences); //save the new array
+
+        }
+
+    }
 
     View.OnClickListener addProgress(int howMuch, TextView dialogTextView, final ProgressBar pb1, final ProgressBar pb2){
 
@@ -134,23 +200,8 @@ public class ViewBookDialog extends DialogFragment {
                 //check that clicking the button makes sense
                 if(pb2.getProgress() + howMuch <= pb2.getMax() && pb2.getProgress() + howMuch >= 0){
 
-                    //set the numbers everywhere
-                    pb1.setProgress(pb1.getProgress() + howMuch);
-                    pb2.setProgress(pb2.getProgress() + howMuch);
-                    dialogTextView.setText(pb1.getProgress() + "/" + totPages);
-                    correctlySetMainPbProgress(mainProgressBar.getProgress() + howMuch, context);
-
-                    //save the new numbers
-                    if(sharedPreferences.getBoolean(SavedActivityData.SOMETHING_SAVED, Boolean.FALSE)){//serve sto something saved? Comunque quando arrivi qua qualcosa l'hai gia salvato in teoria
-
-                        int posToChange = findStringPosition(bookNames, bookName);
-                        bookProgress[posToChange] = String.valueOf(pb1.getProgress());
-                        saveCurrentBookProgresses(  new Gson().toJson(bookProgress), savedActivityData, sharedPreferences); //save the new array
-
-                    }
-
+                    makeProgressChange(pb2.getProgress() + howMuch, mainProgressBar.getProgress() + howMuch, dialogTextView, pb1, pb2);
                 }
-
             }
         };
     }
@@ -184,23 +235,11 @@ public class ViewBookDialog extends DialogFragment {
                             public void onClick(View v) {
                                 int progress = numberPicker.getValue(); //prendi il valore scelto dall'utente
 
-                                //setta la main progress bar
+                                //dati per la main progress bar
                                 int oldprogress = pb1.getProgress(); //pb1 è quella del dialogo
                                 int difference = progress - oldprogress;
-                                correctlySetMainPbProgress(mainProgressBar.getProgress() + difference, context);
 
-                                pb1.setProgress(progress); //metti il nuovo valore di progress sulla progress bar lì e pure dentro la instance di skillActivity
-                                pb2.setProgress(progress);
-                                dialogTextView.setText(progress + "/" + max); //max è totpages
-
-                                //change just the position where bookNames[pos] = bookName with the new page the user has arrived to if somethingSaved
-                                if(sharedPreferences.getBoolean(SavedActivityData.SOMETHING_SAVED, Boolean.FALSE)){//serve sto something saved? Comunque quando arrivi qua qualcosa l'hai gia salvato in teoria
-
-                                    int posToChange = findStringPosition(bookNames, bookName);
-                                    bookProgress[posToChange] = String.valueOf(progress);
-                                    saveCurrentBookProgresses(  new Gson().toJson(bookProgress), savedActivityData, sharedPreferences); //save the new array
-
-                                }
+                                makeProgressChange(progress, mainProgressBar.getProgress() + difference, dialogTextView, pb1, pb2);
 
                                 set_progress_dialog.dismiss(); //esci dal dialogo
                             }

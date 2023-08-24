@@ -36,7 +36,7 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 
-public class SkillActivity extends AppCompatActivity {
+public class SkillActivity extends AppCompatActivity implements CallLoadSharedPreferences {
 
     TableLayout tl;
 
@@ -140,7 +140,7 @@ public class SkillActivity extends AppCompatActivity {
         int currentProgress = pb.getProgress();
         int max = pb.getMax();
 
-        if(currentProgress >= max){ Log.d("dioporco", currentProgress + ">=" + max); return true; }
+        if(currentProgress >= max){  return true; }
         else{ return false; }
     }
 
@@ -155,7 +155,6 @@ public class SkillActivity extends AppCompatActivity {
 
         if(checkProgressBar(mainProgressBar)){
 
-            Log.d("dioporco", "Sei salito di livello!!!!");
             Toast toast = Toast.makeText(context /* SkillActivty */, "Sei salito di livello!!!!", Toast.LENGTH_SHORT);
             toast.show();
 
@@ -169,7 +168,7 @@ public class SkillActivity extends AppCompatActivity {
         }
     }
 
-    public static void correctlySetMainPbProgress(int progress, Context context){
+    public static void correctlySetMainPbProgress(int progress, Context context){ //what if the prgress of that you put in is more than the max progress?
 
         if(progress < 0){ progress = 0;} //meglio non avere roba negativa
         mainProgressBar.setProgress(progress);
@@ -184,7 +183,7 @@ public class SkillActivity extends AppCompatActivity {
     }
 
 
-    public <T> T[] removeElementAtIndex(T[] array, int index) {
+    public static <T> T[] removeElementAtIndex(T[] array, int index) {
 
         Class<?> arrayType = array.getClass().getComponentType();
         T[] newArray = (T[]) Array.newInstance(arrayType, array.length - 1);
@@ -211,7 +210,7 @@ public class SkillActivity extends AppCompatActivity {
     }
 
 
-    private void loadSharedPreferences(SharedPreferences sharedPreferences) {
+    public void loadSharedPreferences(SharedPreferences sharedPreferences) {
 
         //have you saved something?//have you saved something
         somethingSaved = sharedPreferences.getBoolean(SavedActivityData.SOMETHING_SAVED, Boolean.FALSE);
@@ -221,7 +220,8 @@ public class SkillActivity extends AppCompatActivity {
         bookPages = jsonToStringArray(sharedPreferences.getString(SavedActivityData.PAGES_OF_ADDED_BOOKS, "[]"));
         bookProgress = jsonToStringArray(sharedPreferences.getString(SavedActivityData.CURRENT_BOOK_PROGRESSES, "[]"));
 
-        if(somethingSaved){
+        if(bookNames.length != 0){
+
             for(int c=0; c<bookNames.length; c++){ //for every book add a add_book view
 
                 View bookView = getLayoutInflater().inflate(R.layout.add_book, null, false);
@@ -229,14 +229,13 @@ public class SkillActivity extends AppCompatActivity {
                 TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
                 bookNameView.setText(bookNames[c]);  //change the name of the book
 
-
                 ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
                 progressBar.setMax( Integer.parseInt(bookPages[c]) ); //cambia massimo della progress bar
                 progressBar.setProgress(Integer.parseInt(bookProgress[c])); //metti il progresso giusto nella progress bar
 
                 //fai in modo che sia cliccabile e succeda roba sennò che palle
                 TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                bookClickArea.setOnClickListener(add_bookOnClickListener(bookNames[c], Integer.parseInt(bookPages[c]), (ProgressBar) bookView.findViewById(id.progress)));
+                bookClickArea.setOnClickListener(add_bookOnClickListener(bookNames[c], Integer.parseInt(bookPages[c]), (ProgressBar) bookView.findViewById(id.progress), bookView));
             }
         }
     }
@@ -328,7 +327,7 @@ public class SkillActivity extends AppCompatActivity {
                             //VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG
                             //dai la possibilità di premere e fare roba
                             TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                            bookClickArea.setOnClickListener(add_bookOnClickListener(bookName, totPages, progressBar));
+                            bookClickArea.setOnClickListener(add_bookOnClickListener(bookName, totPages, progressBar, bookView));
 
             //ADD_BOOK_DIALOG//ADD_BOOK_DIALOG//ADD_BOOK_DIALOG//ADD_BOOK_DIALOG//ADD_BOOK_DIALOG//ADD_BOOK_DIALOG//ADD_BOOK_DIALOG
 
@@ -363,15 +362,15 @@ public class SkillActivity extends AppCompatActivity {
 
 
     //OnClickListener per add_book.xml
-    public View.OnClickListener add_bookOnClickListener(final String bookName, final int totPages, final ProgressBar progressBar){ //qua invece ne prendo esattamente 1 tutto strano
+    public View.OnClickListener add_bookOnClickListener(final String bookName, final int totPages, final ProgressBar progressBar, View bookView){ //qua invece ne prendo esattamente 1 tutto strano
 
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 //apri classe dialogFragment ViewBookDialog
-                ViewBookDialog dialogFragment = ViewBookDialog.newInstance(bookName, totPages, bookNames, bookProgress);
-                dialogFragment.setReferences(sharedPreferences, savedActivityData, SkillActivity.this, progressBar, mainProgressBar, mainProgressBarText, levelText);
+                ViewBookDialog dialogFragment = ViewBookDialog.newInstance(bookName, totPages, bookNames, bookProgress, bookPages);
+                dialogFragment.setReferences(sharedPreferences, savedActivityData, SkillActivity.this, progressBar, mainProgressBar, mainProgressBarText, levelText, tl, bookView);
                 dialogFragment.show(getSupportFragmentManager(), "custom_dialog");
 
             }
@@ -466,6 +465,11 @@ public class SkillActivity extends AppCompatActivity {
                 // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void callLoadSharedPreferences() {
+        loadSharedPreferences(sharedPreferences);
     }
 }
 
