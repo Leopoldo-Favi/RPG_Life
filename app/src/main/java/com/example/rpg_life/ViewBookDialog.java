@@ -169,7 +169,7 @@ public class ViewBookDialog extends DialogFragment {
             this.dismiss(); //dismiss the dialog, manca solo di far partire loadSharedPreferences di
         }
     }
-
+     //COMMENTO INUTILE
 
     public void makeProgressChange(int progress, int mainProgressBarProgress, TextView dialogTextView, final ProgressBar pb1, final ProgressBar pb2){
 

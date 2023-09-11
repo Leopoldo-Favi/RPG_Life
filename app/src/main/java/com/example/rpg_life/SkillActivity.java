@@ -38,6 +38,8 @@ import java.lang.reflect.Type;
 
 public class SkillActivity extends AppCompatActivity implements CallLoadSharedPreferences {
 
+    Task[] tasks = {};
+
     TableLayout tl;
 
     static SavedData mainActivitySavedDataInstance;
@@ -60,7 +62,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
     Boolean somethingSaved;
     //int[] int_currentBookProgresses;
     String[] bookNames = {};
-    String[] bookPages = {};
+    String[] bookPages = {}; //TRY TO IMPLEMENT THE PROGRESS TASK FIRST //DO I WANT A BOOK CLASS THAT EXTENDS ProgressTask??
     String[] bookProgress = {};
 
     static ProgressBar mainProgressBar;
