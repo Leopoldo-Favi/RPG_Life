@@ -38,7 +38,9 @@ import java.lang.reflect.Type;
 
 public class SkillActivity extends AppCompatActivity implements CallLoadSharedPreferences {
 
-    Task[] tasks = {};
+    ProgressTask progressTask1 = new ProgressTask("ciao", 50, 100);
+    ProgressTask progressTask2 = new ProgressTask("caca", 50, 200);
+    Task[] tasks = { progressTask1 , progressTask2 };
 
     TableLayout tl;
 
@@ -125,6 +127,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         correctlySetMainPbProgress(progressValue, SkillActivity.this);
 
 
+        //button for adding tasks
         ImageButton addButton = findViewById(id.addBook_btn);
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -239,6 +242,21 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                 TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
                 bookClickArea.setOnClickListener(add_bookOnClickListener(bookNames[c], Integer.parseInt(bookPages[c]), (ProgressBar) bookView.findViewById(id.progress), bookView));
             }
+        }
+        //NUOVO SISTEMA TASK, LE TASK EFFETTIVAMENTE APPAIONO
+        for(int i=0; i<tasks.length; i++){
+            View bookView = getLayoutInflater().inflate(R.layout.add_book, null, false);
+            tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
+            TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
+            bookNameView.setText(tasks[i].name);  //change the name of the book
+
+            ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
+            progressBar.setMax( tasks[i].getMaxProgress() ); //cambia massimo della progress bar
+            progressBar.setProgress(50); //metti il progresso giusto nella progress bar
+
+            //fai in modo che sia cliccabile e succeda roba sennò che palle
+            TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
+            bookClickArea.setOnClickListener(add_bookOnClickListener(tasks[i].name, tasks[i].getMaxProgress() , (ProgressBar) bookView.findViewById(id.progress), bookView));
         }
     }
 
