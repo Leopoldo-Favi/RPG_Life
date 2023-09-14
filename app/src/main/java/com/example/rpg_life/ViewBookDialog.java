@@ -1,5 +1,8 @@
 package com.example.rpg_life;
 
+import static com.example.rpg_life.MainActivity.addValueToArray;
+import static com.example.rpg_life.MainActivity.addArrayToArray;
+
 import static com.example.rpg_life.SkillActivity.findStringPosition;
 import static com.example.rpg_life.SkillActivity.jsonToStringArray;
 import static com.example.rpg_life.SkillActivity.saveCurrentBookProgresses;
@@ -37,7 +40,7 @@ import java.lang.reflect.Type;
 public class ViewBookDialog extends DialogFragment {
 
     private static final String ARG_BOOKNAME = "bookName_key";
-    private static final String ARG_TOTPAGES = "totPages_key";
+private static final String ARG_TOTPAGES = "totPages_key";
     private static final String ARG_BOOKNAMES = "BookNames_key";
     private static final String ARG_BOOKPROGRESS = "BookProgress_key";
     private static final String ARG_BOOKPPAGES = "BookPages_key";
@@ -46,9 +49,11 @@ public class ViewBookDialog extends DialogFragment {
 
     String bookName;
     int totPages;
-    String[] bookNames;
-    String[] bookProgresses;
-    String[] bookPages;
+    static String[] bookNames;
+    static String[] bookProgresses;
+    static String[] bookPages;
+
+    Task[] task ;
 
     private SharedPreferences sharedPreferences;
     private SavedActivityData savedActivityData;
@@ -63,15 +68,36 @@ public class ViewBookDialog extends DialogFragment {
     TableLayout tl;
     View bookView;
 
+    static public String[][] extractTaskInfo(Task[] tasks) {//array di array di stringe lunghezza 3
+        for (int i = 0; i < tasks.length; i++) {
+            Task task = tasks[i];
+
+            // Collect task names
+            bookNames = addValueToArray(bookNames, task.name);
+
+            // Collect maxProgress values (assuming maxProgress is an integer)
+            bookProgresses = addValueToArray(bookProgresses, String.valueOf(task.getMaxProgress()));
+
+            // Collect currentProgress values (assuming currentProgress is an integer)
+            bookPages = addValueToArray(bookPages, String.valueOf(task.getCurrentProgress()) );
+        }
+
+        String[][] arrayToReturn = {bookNames, bookProgresses, bookPages};
+        return arrayToReturn;
+    }
+
     //prendi dati da skill activity
-    public static ViewBookDialog newInstance(String bookName, int totPages, String[] bookNames, String[] bookProgress, String[] bookPages) {
+    public static ViewBookDialog newInstance(String bookName, int totPages, /*String[] bookNames, String[] bookProgress, String[] bookPages*/ Task[] tasks) {
         ViewBookDialog fragment = new ViewBookDialog();
         Bundle args = new Bundle();
 
         args.putString(ARG_BOOKNAME, bookName);
         args.putInt(ARG_TOTPAGES, totPages);
-        args.putStringArray(ARG_BOOKNAMES, bookNames);
-        args.putStringArray(ARG_BOOKPROGRESS, bookProgress);
+
+        //DA TRE STA TUTTO PER DIVENTARE UNO
+        extractTaskInfo(tasks); //QUESTO FORSE NON SERVE A NULLA, bookNames, bookProgresses e bookPages venivano da SkillActivity, non da qua dentro
+        args.putStringArray(ARG_BOOKNAMES, bookNames); //put bookNames nella chiave ARG_BOOKNAMES
+        args.putStringArray(ARG_BOOKPROGRESS, bookProgresses);
         args.putStringArray(ARG_BOOKPPAGES, bookPages);
         fragment.setArguments(args);
 

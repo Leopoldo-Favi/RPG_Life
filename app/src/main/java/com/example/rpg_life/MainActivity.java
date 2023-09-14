@@ -262,6 +262,22 @@ public class MainActivity extends AppCompatActivity{
         return newArray;
     }
 
+    public static <T> T[][] addArrayToArray(T[][] array, T[] newValue) {
+
+        Class<?> arrayType = array.getClass().getComponentType();
+        T[][] newArray = (T[][]) Array.newInstance(arrayType, array.length + 1);
+
+        // Copy existing elements to the new array
+        for (int i = 0; i < array.length; i++) {
+            newArray[i] = array[i];
+        }
+
+        // Add the new value to the end of the new array
+        newArray[newArray.length - 1] = newValue;
+
+        return newArray;
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void saveActivityData(SharedPreferences sharedPreferences){
 

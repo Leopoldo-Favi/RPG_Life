@@ -32,19 +32,30 @@ public class SavedActivityData {
     }
 
     //BOOKS//BOOKS//BOOKS//BOOKS//BOOKS//BOOKS//BOOKS//BOOKS//BOOKS//BOOKS//BOOKS//BOOKS//BOOKS//BOOKS//BOOKS
+
+    //DA TRE STA TUTTO PER DIVENTARE UNO
     public static final String NAMES_OF_ADDED_BOOKS = "namesOfAddedBooks";
     public static final String PAGES_OF_ADDED_BOOKS = "pagesOfAddedBooks";
     public static final String CURRENT_BOOK_PROGRESSES = "currentBookProgresses";
+
+    public static final String TASKS = "tasks";
 
     private String namesOfAddedBooks = new String();
     private String pagesOfAddedBooks = new String();
     private String currentBookProgresses = new String();
 
+    private String tasks = new String();
+
     public String getNamesOfAddedBooks(){ return namesOfAddedBooks; }
     public String getPagesOfAddedBooks(){ return pagesOfAddedBooks; }
     public String getCurrentBookProgresses(){ return currentBookProgresses; }
 
+    public String getTasks(){ return tasks; }
+
     public void setCurrentBookProgresses(String jsonArray){ this.currentBookProgresses = jsonArray; }
+
+    public void setTasks(String jsonTasks){ this.tasks = jsonTasks; }
+
 
 }
 

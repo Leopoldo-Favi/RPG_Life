@@ -38,9 +38,12 @@ import java.lang.reflect.Type;
 
 public class SkillActivity extends AppCompatActivity implements CallLoadSharedPreferences {
 
+    /*
     ProgressTask progressTask1 = new ProgressTask("ciao", 50, 100);
     ProgressTask progressTask2 = new ProgressTask("caca", 50, 200);
     Task[] tasks = { progressTask1 , progressTask2 };
+     */
+    Task[] tasks = {};
 
     TableLayout tl;
 
@@ -220,11 +223,16 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         //have you saved something?//have you saved something
         somethingSaved = sharedPreferences.getBoolean(SavedActivityData.SOMETHING_SAVED, Boolean.FALSE);
 
+        /*
         //sharedPreferences.getString(SavedActivityData.CURRENT_BOOK_PROGRESSES, "[]");
         bookNames = jsonToStringArray(sharedPreferences.getString(SavedActivityData.NAMES_OF_ADDED_BOOKS, "[]"));
         bookPages = jsonToStringArray(sharedPreferences.getString(SavedActivityData.PAGES_OF_ADDED_BOOKS, "[]"));
         bookProgress = jsonToStringArray(sharedPreferences.getString(SavedActivityData.CURRENT_BOOK_PROGRESSES, "[]"));
+         */
 
+        tasks = jsonToTaskArray(sharedPreferences.getString(SavedActivityData.TASKS, "[]"));
+
+        /*
         if(bookNames.length != 0){
 
             for(int c=0; c<bookNames.length; c++){ //for every book add a add_book view
@@ -242,13 +250,16 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                 TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
                 bookClickArea.setOnClickListener(add_bookOnClickListener(bookNames[c], Integer.parseInt(bookPages[c]), (ProgressBar) bookView.findViewById(id.progress), bookView));
             }
-        }
+        }*/
+
         //NUOVO SISTEMA TASK, LE TASK EFFETTIVAMENTE APPAIONO
         for(int i=0; i<tasks.length; i++){
             View bookView = getLayoutInflater().inflate(R.layout.add_book, null, false);
             tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
             TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
+            Log.d("dioporco", tasks[i].name);
             bookNameView.setText(tasks[i].name);  //change the name of the book
+
 
             ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
             progressBar.setMax( tasks[i].getMaxProgress() ); //cambia massimo della progress bar
@@ -261,25 +272,33 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
     }
 
     //salva i vari dati che bisogna salvera per fare loadSharedPreferences
-    public void saveBooksData(String title, String bookName, int nPages, SharedPreferences sharedPreferences){
+    public void saveBooksData(/*String title, String bookName, int nPages, SharedPreferences sharedPreferences*/ Task newTask){
 
         //aggiungi i nuovi valori
-        bookNames = addValueToArray(bookNames, bookName);
-        bookPages = addValueToArray( bookPages, String.valueOf(nPages));
-        bookProgress = addValueToArray(bookProgress, "0"); //tutto parte da 0
+        //bookNames = addValueToArray(bookNames, bookName);
+        //bookPages = addValueToArray( bookPages, String.valueOf(nPages));
+        //bookProgress = addValueToArray(bookProgress, "0"); //tutto parte da 0
+
+        tasks = addValueToArray(tasks, newTask);
 
         //trasformali in json
-        String jsonBookNames = new Gson().toJson(bookNames);
-        String jsonBookPages = new Gson().toJson(bookPages);
-        String jsonBookProgress = new Gson().toJson(bookProgress);
+        //String jsonBookNames = new Gson().toJson(bookNames);
+        //String jsonBookPages = new Gson().toJson(bookPages);
+        //String jsonBookProgress = new Gson().toJson(bookProgress);
+
+        String jsonTasks = new Gson().toJson(tasks);
 
         //edita i file di salvataggio
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean(SavedData.SOMETHING_SAVED, Boolean.TRUE); //hai salvato qualcosa = true
 
-        editor.putString(SavedActivityData.NAMES_OF_ADDED_BOOKS, jsonBookNames);
-        editor.putString(SavedActivityData.PAGES_OF_ADDED_BOOKS, jsonBookPages);
-        editor.putString(SavedActivityData.CURRENT_BOOK_PROGRESSES, jsonBookProgress);
+        //editor.putString(SavedActivityData.NAMES_OF_ADDED_BOOKS, jsonBookNames);
+        //editor.putString(SavedActivityData.PAGES_OF_ADDED_BOOKS, jsonBookPages);
+        //editor.putString(SavedActivityData.CURRENT_BOOK_PROGRESSES, jsonBookProgress);
+
+        editor.putString(SavedActivityData.TASKS, jsonTasks);
+
+        //tasks
 
         editor.apply();
     }
@@ -301,6 +320,11 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         return new Gson().fromJson(jsonArray, type);
     }
 
+    public static Task[] jsonToTaskArray(String jsonTasks){
+        // Convert the JSON string back to an array using Gson
+        Type type = new TypeToken<Task[]>() {}.getType();
+        return new Gson().fromJson(jsonTasks, type);
+    }
 
     AlertDialog add_book_dialog;
     AlertDialog view_book_dialog;
@@ -329,39 +353,47 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                     @Override
                     public void onClick(View v) {
 
+                        /*
                         final String bookName = selectBookName.getText().toString(); //prendi il testo scritto dall'utente
                         String totPages_string = selectBookTotPages.getText().toString(); //non so se questo serve
+                        */
+
+                        final String taskName = selectBookName.getText().toString(); //prendi il testo scritto dall'utente
+                        int totProgress= Integer.parseInt(selectBookTotPages.getText().toString() );  //non so se questo serve
+
+                        Task newTask = new ProgressTask(taskName, 5, totProgress, 0);
+                        //final String json
 
 
-                        if(bookName.length() > 0 && totPages_string.length() > 0) { //se l'utente ha messo tutto
-                            final int totPages = Integer.parseInt(totPages_string);
+                                // DA QUI CAMBIAMENTI
+                        if(taskName.length() > 0 && totProgress > 0) { //se l'utente ha messo tutto
 
                             View bookView = getLayoutInflater().inflate(R.layout.add_book, null, false);
                             tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
                             TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
-                            bookNameView.setText(bookName);  //change the name of the book
+                            bookNameView.setText(taskName);  //change the name of the book
                             final ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
-                            progressBar.setMax(totPages); //set the number of pages in the progress bar
+                            progressBar.setMax(totProgress); //set the number of pages in the progress bar
 
 
                             //VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG
                             //dai la possibilità di premere e fare roba
                             TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                            bookClickArea.setOnClickListener(add_bookOnClickListener(bookName, totPages, progressBar, bookView));
+                            bookClickArea.setOnClickListener(add_bookOnClickListener(taskName, totProgress, progressBar, bookView));
 
             //ADD_BOOK_DIALOG//ADD_BOOK_DIALOG//ADD_BOOK_DIALOG//ADD_BOOK_DIALOG//ADD_BOOK_DIALOG//ADD_BOOK_DIALOG//ADD_BOOK_DIALOG
 
                             //Per salvare
-                            saveBooksData(titleValue, bookName, totPages, sharedPreferences);
+                            saveBooksData(newTask);
 
                             add_book_dialog.dismiss(); //esci dal dialogo solo se c'è effitamente un nome
 
                         //ERRORI
-                        } else if(bookName.length() > 0){
+                        } else if(taskName.length() > 0){
                             selectBookTotPages.setHint("You must enter the number of pages number here"); //dai un errore se non viene scelto un numero di pagine
                             selectBookTotPages.setHintTextColor(Color.RED);
 
-                        } else if (totPages_string.length() > 0){
+                        } else if (totProgress > 0){
                             selectBookName.setHint("You must enter the name of your book"); //dai un errore se non viene scelto nessun nome
                             selectBookName.setHintTextColor(Color.RED);
 
@@ -389,7 +421,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
             public void onClick(View v) {
 
                 //apri classe dialogFragment ViewBookDialog
-                ViewBookDialog dialogFragment = ViewBookDialog.newInstance(bookName, totPages, bookNames, bookProgress, bookPages);
+                ViewBookDialog dialogFragment = ViewBookDialog.newInstance(bookName, totPages, tasks);
                 dialogFragment.setReferences(sharedPreferences, savedActivityData, SkillActivity.this, progressBar, mainProgressBar, mainProgressBarText, levelText, tl, bookView);
                 dialogFragment.show(getSupportFragmentManager(), "custom_dialog");
 
