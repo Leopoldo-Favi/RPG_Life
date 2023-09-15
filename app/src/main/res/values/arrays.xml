@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="spinner_options">
+        <item>Add a task with a progress bar</item>
+        <item>Add a task with a checkbox</item>
+        <!-- Add more options as needed -->
+    </array>
+</resources>

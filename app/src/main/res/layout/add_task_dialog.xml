@@ -15,12 +15,20 @@
             android:layout_height="wrap_content"
             android:hint="Please select the name of the book" />
 
+        <Spinner
+            android:id="@+id/spinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Choose an option"
+            android:entries="@array/spinner_options" ></Spinner>
+
         <EditText
-            android:id="@+id/select_book_totPages"
+            android:id="@+id/select_task_maxProgress"
             android:inputType="number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="How many pages does the book have" />
+            android:hint="How many pages does the book have"
+            android:visibility="gone"/>
 
     </LinearLayout>
 
