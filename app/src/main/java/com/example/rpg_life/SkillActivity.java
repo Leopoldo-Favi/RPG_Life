@@ -30,6 +30,13 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.example.rpg_life.R.id;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
@@ -263,7 +270,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
             ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
             progressBar.setMax( tasks[i].getMaxProgress() ); //cambia massimo della progress bar
-            progressBar.setProgress(50); //metti il progresso giusto nella progress bar
+            progressBar.setProgress( tasks[i].getCurrentProgress() ); //metti il progresso giusto nella progress bar
 
             //fai in modo che sia cliccabile e succeda roba sennò che palle
             TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
@@ -280,6 +287,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         //bookProgress = addValueToArray(bookProgress, "0"); //tutto parte da 0
 
         tasks = addValueToArray(tasks, newTask);
+        Log.d("dioporco", String.valueOf(tasks[tasks.length-1].getMaxProgress()));
 
         //trasformali in json
         //String jsonBookNames = new Gson().toJson(bookNames);
@@ -287,6 +295,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         //String jsonBookProgress = new Gson().toJson(bookProgress);
 
         String jsonTasks = new Gson().toJson(tasks);
+        Log.d("dioporco", jsonTasks);
 
         //edita i file di salvataggio
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -303,12 +312,12 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         editor.apply();
     }
 
-    public static void saveCurrentBookProgresses(String jsonProgressesArray, SavedActivityData sad, SharedPreferences sharedPreferences){ //used to save the full array not just to add values one by one
+    public static void saveCurrentBookProgresses(String jsonTasks, SavedActivityData sad, SharedPreferences sharedPreferences){ //used to save the full array not just to add values one by one
 
-        sad.setCurrentBookProgresses(jsonProgressesArray);
+        sad.setTasks(jsonTasks);
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(SavedActivityData.CURRENT_BOOK_PROGRESSES, sad.getCurrentBookProgresses());
+        editor.putString(SavedActivityData.TASKS, sad.getTasks() );
         editor.apply();
     }
 
@@ -320,12 +329,42 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         return new Gson().fromJson(jsonArray, type);
     }
 
-    public static Task[] jsonToTaskArray(String jsonTasks){
-        // Convert the JSON string back to an array using Gson
-        Type type = new TypeToken<Task[]>() {}.getType();
-        return new Gson().fromJson(jsonTasks, type);
+    public static Task[] jsonToTaskArray(String jsonTasks) {
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter( Task[].class, new TaskArrayDeserializer() )
+                .create();
+
+        return gson.fromJson(jsonTasks, Task[].class);
     }
 
+    static class TaskArrayDeserializer implements JsonDeserializer<Task[]> {
+        @Override
+        public Task[] deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonArray jsonArray = json.getAsJsonArray();
+            Task[] tasks = new Task[jsonArray.size()];
+
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JsonObject jsonObject = jsonArray.get(i).getAsJsonObject();
+
+                //common properties for all tasks
+                String name = jsonObject.get("name").getAsString();
+                int rewardExperience = jsonObject.get("rewardExperience").getAsInt();
+
+                if (jsonObject.has("maxProgress")) { //it is a ProgressTask
+                    int maxProgress = jsonObject.get("maxProgress").getAsInt();
+                    int currentProgress = jsonObject.get("currentProgress").getAsInt();
+                    tasks[i] = new ProgressTask(name, rewardExperience, maxProgress, currentProgress);
+                } else if (jsonObject.has("propertyB")) { //this is if i needed other data (CheckboxTask data for ex), for now no
+                    //int propertyB = jsonObject.get("propertyB").getAsInt();
+                    //tasks[i] = new CheckboxTask(name, maxProgress, currentProgress, propertyB);
+                } else { //its not a subclass
+                    tasks[i] = new Task(name, rewardExperience);
+                }
+            }
+
+            return tasks;
+        }
+    }
     AlertDialog add_book_dialog;
     AlertDialog view_book_dialog;
     AlertDialog set_progress_dialog;
@@ -361,7 +400,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                         final String taskName = selectBookName.getText().toString(); //prendi il testo scritto dall'utente
                         int totProgress= Integer.parseInt(selectBookTotPages.getText().toString() );  //non so se questo serve
 
-                        Task newTask = new ProgressTask(taskName, 5, totProgress, 0);
+                        ProgressTask newTask = new ProgressTask(taskName, 5, totProgress, 0);
                         //final String json
 
 
@@ -422,7 +461,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                 //apri classe dialogFragment ViewBookDialog
                 ViewBookDialog dialogFragment = ViewBookDialog.newInstance(bookName, totPages, tasks);
-                dialogFragment.setReferences(sharedPreferences, savedActivityData, SkillActivity.this, progressBar, mainProgressBar, mainProgressBarText, levelText, tl, bookView);
+                dialogFragment.setReferences(sharedPreferences, savedActivityData, SkillActivity.this, progressBar, mainProgressBar, mainProgressBarText, levelText, tl, bookView, tasks);
                 dialogFragment.show(getSupportFragmentManager(), "custom_dialog");
 
             }

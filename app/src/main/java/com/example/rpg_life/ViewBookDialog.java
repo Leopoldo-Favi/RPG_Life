@@ -49,11 +49,11 @@ private static final String ARG_TOTPAGES = "totPages_key";
 
     String bookName;
     int totPages;
-    static String[] bookNames;
-    static String[] bookProgresses;
-    static String[] bookPages;
+    static String[] bookNames = {};
+    static String[] bookProgresses = {};
+    static String[] bookPages = {};
 
-    Task[] task ;
+    Task[] tasks = {};
 
     private SharedPreferences sharedPreferences;
     private SavedActivityData savedActivityData;
@@ -75,11 +75,11 @@ private static final String ARG_TOTPAGES = "totPages_key";
             // Collect task names
             bookNames = addValueToArray(bookNames, task.name);
 
-            // Collect maxProgress values (assuming maxProgress is an integer)
-            bookProgresses = addValueToArray(bookProgresses, String.valueOf(task.getMaxProgress()));
+            // Collect currentProgress values
+            bookProgresses = addValueToArray(bookProgresses, String.valueOf(task.getCurrentProgress()) );
 
-            // Collect currentProgress values (assuming currentProgress is an integer)
-            bookPages = addValueToArray(bookPages, String.valueOf(task.getCurrentProgress()) );
+            // Collect maxProgress values
+            bookPages = addValueToArray(bookPages,  String.valueOf(task.getMaxProgress()) );
         }
 
         String[][] arrayToReturn = {bookNames, bookProgresses, bookPages};
@@ -94,7 +94,7 @@ private static final String ARG_TOTPAGES = "totPages_key";
         args.putString(ARG_BOOKNAME, bookName);
         args.putInt(ARG_TOTPAGES, totPages);
 
-        //DA TRE STA TUTTO PER DIVENTARE UNO
+        //QUI STO USANDO IL VECCHIO PARADIGMA (bookNames bookProgresses bookPages) PERO PER ORA FUNZIONA
         extractTaskInfo(tasks); //QUESTO FORSE NON SERVE A NULLA, bookNames, bookProgresses e bookPages venivano da SkillActivity, non da qua dentro
         args.putStringArray(ARG_BOOKNAMES, bookNames); //put bookNames nella chiave ARG_BOOKNAMES
         args.putStringArray(ARG_BOOKPROGRESS, bookProgresses);
@@ -105,7 +105,7 @@ private static final String ARG_TOTPAGES = "totPages_key";
     }
 
     //prendi dati da skillActivity
-    public void setReferences(SharedPreferences sharedPreferences, SavedActivityData savedActivityData, SkillActivity context, ProgressBar progressBar, ProgressBar mainProgressBar, TextView mainProgressBarText, TextView levelText, TableLayout tl, View bookView){
+    public void setReferences(SharedPreferences sharedPreferences, SavedActivityData savedActivityData, SkillActivity context, ProgressBar progressBar, ProgressBar mainProgressBar, TextView mainProgressBarText, TextView levelText, TableLayout tl, View bookView, Task[] tasks){
         this.sharedPreferences = sharedPreferences;
         this.savedActivityData = savedActivityData;
         this.context = context;
@@ -115,6 +115,7 @@ private static final String ARG_TOTPAGES = "totPages_key";
         this.levelText = levelText;
         this.tl = tl;
         this.bookView = bookView;
+        this.tasks = tasks;
     }
 
     @Override
@@ -137,7 +138,7 @@ private static final String ARG_TOTPAGES = "totPages_key";
         //progress bar stuff
         final ProgressBar dialogProgressBar = (ProgressBar) rootView.findViewById(R.id.dialog_progress_bar);
         dialogProgressBar.setMax(totPages); //set the number of pages in the progress bar
-        int progress = Integer.parseInt( bookProgresses[findStringPosition(bookNames, bookName)] );
+        int progress = tasks[findStringPosition(bookNames, bookName)].getCurrentProgress();
         dialogProgressBar.setProgress(progress); //also set the progress
         TextView dialogTextView = (TextView) rootView.findViewById(R.id.dialog_text_view);
         dialogTextView.setText(progress + "/" + totPages); //set it also in the textview
@@ -174,18 +175,27 @@ private static final String ARG_TOTPAGES = "totPages_key";
 
             //delete task data
             int position = findStringPosition(bookNames, bookName);
+            /*
             bookNames = removeElementAtIndex(bookNames, position);
             bookProgresses = removeElementAtIndex(bookProgresses, position);
-            bookPages = removeElementAtIndex(bookPages, position);
+            bookPages = removeElementAtIndex(bookPages, position);*/
 
+            tasks = removeElementAtIndex(tasks, position);
+
+            /*
             String jsonBookNames = new Gson().toJson(bookNames);
             String jsonBookProgress = new Gson().toJson(bookProgresses);
-            String jsonBookPages = new Gson().toJson(bookPages);
+            String jsonBookPages = new Gson().toJson(bookPages);*/
 
-            SharedPreferences.Editor editor = sharedPreferences.edit();
+            String jsonTasks = new Gson().toJson(tasks);
+
+            SharedPreferences.Editor editor = sharedPreferences.edit();/*
             editor.putString(SavedActivityData.NAMES_OF_ADDED_BOOKS, jsonBookNames);
             editor.putString(SavedActivityData.CURRENT_BOOK_PROGRESSES, jsonBookProgress);
-            editor.putString(SavedActivityData.PAGES_OF_ADDED_BOOKS, jsonBookPages);
+            editor.putString(SavedActivityData.PAGES_OF_ADDED_BOOKS, jsonBookPages);*/
+
+            editor.putString(SavedActivityData.TASKS, jsonTasks);
+
             editor.apply();
             //delete task data
 
@@ -195,7 +205,6 @@ private static final String ARG_TOTPAGES = "totPages_key";
             this.dismiss(); //dismiss the dialog, manca solo di far partire loadSharedPreferences di
         }
     }
-     //COMMENTO INUTILE
 
     public void makeProgressChange(int progress, int mainProgressBarProgress, TextView dialogTextView, final ProgressBar pb1, final ProgressBar pb2){
 
@@ -210,8 +219,9 @@ private static final String ARG_TOTPAGES = "totPages_key";
         if(!checkProgressBar(pb1)){//se la task non è completa (otherwise it throws an error)
 
             int posToChange = findStringPosition(bookNames, bookName);
-            bookProgresses[posToChange] = String.valueOf(pb1.getProgress());
-            saveCurrentBookProgresses(  new Gson().toJson(bookProgresses), savedActivityData, sharedPreferences); //save the new array
+            //bookProgresses[posToChange] = String.valueOf(pb1.getProgress());
+            tasks[posToChange].setCurrentProgress( pb1.getProgress() );
+            saveCurrentBookProgresses(  new Gson().toJson(tasks), savedActivityData, sharedPreferences); //save the new array
 
         }
 

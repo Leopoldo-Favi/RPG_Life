@@ -1,8 +1,5 @@
 package com.example.rpg_life;
 
-import android.content.Intent;
-import android.view.View;
-
 public class Task{
 
     String name;
@@ -17,5 +14,6 @@ public class Task{
    //REFERENCE FUNCTIONS
     public int getMaxProgress(){ return 0; }  //QUESTA FUNZIONE IN REALTA E' VIENE DEFINITA IN ProgressTask
     public int getCurrentProgress(){ return 0; }  //QUESTA FUNZIONE IN REALTA E' VIENE DEFINITA IN ProgressTask
+    public void setCurrentProgress(int progress){}  //QUESTA FUNZIONE IN REALTA E' VIENE DEFINITA IN ProgressTask
 
 }
