@@ -1,15 +1,10 @@
 package com.example.rpg_life;
 
-import static com.example.rpg_life.MainActivity.addValueToArray;
-import static com.example.rpg_life.MainActivity.addArrayToArray;
-
-import static com.example.rpg_life.SkillActivity.findStringPosition;
-import static com.example.rpg_life.SkillActivity.jsonToStringArray;
+import static com.example.rpg_life.SkillActivity.findTaskPosByName;
 import static com.example.rpg_life.SkillActivity.saveCurrentBookProgresses;
 import static  com.example.rpg_life.SkillActivity.correctlySetMainPbProgress;
 import static com.example.rpg_life.SkillActivity.checkProgressBar;
 import static com.example.rpg_life.SkillActivity.removeElementAtIndex;
-
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
@@ -33,25 +28,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Type;
 
 public class ViewBookDialog extends DialogFragment {
 
-    private static final String ARG_BOOKNAME = "bookName_key";
-private static final String ARG_TOTPAGES = "totPages_key";
-    private static final String ARG_BOOKNAMES = "BookNames_key";
-    private static final String ARG_BOOKPROGRESS = "BookProgress_key";
-    private static final String ARG_BOOKPPAGES = "BookPages_key";
+    private static final String ARG_TASKNAME = "taskName_key";
+    private static final String ARG_MAXPROGRESS = "maxProgress_key";
 
     static SkillActivity context;
 
-    String bookName;
-    int totPages;
-    static String[] bookNames = {};
-    static String[] bookProgresses = {};
-    static String[] bookPages = {};
+    String taskName;
+    int maxProgress;
 
     Task[] tasks = {};
 
@@ -68,37 +55,13 @@ private static final String ARG_TOTPAGES = "totPages_key";
     TableLayout tl;
     View bookView;
 
-    static public String[][] extractTaskInfo(Task[] tasks) {//array di array di stringe lunghezza 3
-        for (int i = 0; i < tasks.length; i++) {
-            Task task = tasks[i];
-
-            // Collect task names
-            bookNames = addValueToArray(bookNames, task.name);
-
-            // Collect currentProgress values
-            bookProgresses = addValueToArray(bookProgresses, String.valueOf(task.getCurrentProgress()) );
-
-            // Collect maxProgress values
-            bookPages = addValueToArray(bookPages,  String.valueOf(task.getMaxProgress()) );
-        }
-
-        String[][] arrayToReturn = {bookNames, bookProgresses, bookPages};
-        return arrayToReturn;
-    }
-
     //prendi dati da skill activity
-    public static ViewBookDialog newInstance(String bookName, int totPages, /*String[] bookNames, String[] bookProgress, String[] bookPages*/ Task[] tasks) {
+    public static ViewBookDialog newInstance(String taskName, int totPages /*String[] bookNames, String[] bookProgress, String[] bookPages, Task[] tasks*/) {
         ViewBookDialog fragment = new ViewBookDialog();
         Bundle args = new Bundle();
 
-        args.putString(ARG_BOOKNAME, bookName);
-        args.putInt(ARG_TOTPAGES, totPages);
-
-        //QUI STO USANDO IL VECCHIO PARADIGMA (bookNames bookProgresses bookPages) PERO PER ORA FUNZIONA
-        extractTaskInfo(tasks); //QUESTO FORSE NON SERVE A NULLA, bookNames, bookProgresses e bookPages venivano da SkillActivity, non da qua dentro
-        args.putStringArray(ARG_BOOKNAMES, bookNames); //put bookNames nella chiave ARG_BOOKNAMES
-        args.putStringArray(ARG_BOOKPROGRESS, bookProgresses);
-        args.putStringArray(ARG_BOOKPPAGES, bookPages);
+        args.putString(ARG_TASKNAME, taskName);
+        args.putInt(ARG_MAXPROGRESS, totPages);
         fragment.setArguments(args);
 
         return fragment;
@@ -124,29 +87,27 @@ private static final String ARG_TOTPAGES = "totPages_key";
         View rootView = inflater.inflate(R.layout.view_book_dialog, container, false);
 
         // Retrieve data from arguments
-        bookName = getArguments().getString(ARG_BOOKNAME);
-        totPages = getArguments().getInt(ARG_TOTPAGES);
-
-        bookNames = getArguments().getStringArray(ARG_BOOKNAMES);
-        bookProgresses = getArguments().getStringArray(ARG_BOOKPROGRESS);
-        bookPages = getArguments().getStringArray(ARG_BOOKPPAGES);
+        taskName = getArguments().getString(ARG_TASKNAME);
+        maxProgress = getArguments().getInt(ARG_MAXPROGRESS);
 
         //make the data visible by puttin it in the views
         TextView dialogTitle = (TextView) rootView.findViewById(R.id.dialog_title);
-        dialogTitle.setText(bookName);
+        dialogTitle.setText(taskName);
 
         //progress bar stuff
         final ProgressBar dialogProgressBar = (ProgressBar) rootView.findViewById(R.id.dialog_progress_bar);
-        dialogProgressBar.setMax(totPages); //set the number of pages in the progress bar
-        int progress = tasks[findStringPosition(bookNames, bookName)].getCurrentProgress();
+        dialogProgressBar.setMax(maxProgress); //set the number of pages in the progress bar
+        Log.d("dioporco", new Gson().toJson(tasks) + " " + taskName);
+        Log.d("dioporco", String.valueOf(findTaskPosByName(tasks, taskName)));
+        int progress = tasks[findTaskPosByName(tasks, taskName)].getCurrentProgress();
         dialogProgressBar.setProgress(progress); //also set the progress
         TextView dialogTextView = (TextView) rootView.findViewById(R.id.dialog_text_view);
-        dialogTextView.setText(progress + "/" + totPages); //set it also in the textview
+        dialogTextView.setText(progress + "/" + maxProgress); //set it also in the textview
 
 
         //SET_PROGRESS_DIALOG//SET_PROGRESS_DIALOG//SET_PROGRESS_DIALOG//SET_PROGRESS_DIALOG//SET_PROGRESS_DIALOG//SET_PROGRESS_DIALOG//SET_PROGRESS_DIALOG//SET_PROGRESS_DIALOG
         LinearLayout progressShower = (LinearLayout) rootView.findViewById(R.id.dialog_progress_shower);
-        progressShower.setOnClickListener( numberPickerDialog( bookName, dialogTextView, 0, totPages, "A che pagina sei arrivato?", dialogProgressBar, progressBar));
+        progressShower.setOnClickListener( numberPickerDialog( taskName, dialogTextView, 0, maxProgress, "A che pagina sei arrivato?", dialogProgressBar, progressBar));
         //non è molto pulito che passi esattamente 2 progress bar e non quante me ne servono caso per caso però era più semplice
 
 
@@ -174,33 +135,16 @@ private static final String ARG_TOTPAGES = "totPages_key";
             correctlySetMainPbProgress(mainProgressBar.getProgress() + taskCompletedReward, context); //exp reward
 
             //delete task data
-            int position = findStringPosition(bookNames, bookName);
-            /*
-            bookNames = removeElementAtIndex(bookNames, position);
-            bookProgresses = removeElementAtIndex(bookProgresses, position);
-            bookPages = removeElementAtIndex(bookPages, position);*/
-
+            int position = findTaskPosByName(tasks, taskName);
             tasks = removeElementAtIndex(tasks, position);
-
-            /*
-            String jsonBookNames = new Gson().toJson(bookNames);
-            String jsonBookProgress = new Gson().toJson(bookProgresses);
-            String jsonBookPages = new Gson().toJson(bookPages);*/
 
             String jsonTasks = new Gson().toJson(tasks);
 
-            SharedPreferences.Editor editor = sharedPreferences.edit();/*
-            editor.putString(SavedActivityData.NAMES_OF_ADDED_BOOKS, jsonBookNames);
-            editor.putString(SavedActivityData.CURRENT_BOOK_PROGRESSES, jsonBookProgress);
-            editor.putString(SavedActivityData.PAGES_OF_ADDED_BOOKS, jsonBookPages);*/
-
+            SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString(SavedActivityData.TASKS, jsonTasks);
-
             editor.apply();
             //delete task data
 
-            //CallLoadSharedPreferences caller = (CallLoadSharedPreferences) context;
-            //caller.callLoadSharedPreferences();
             tl.removeView(bookView); //once u have completed the task remove it
             this.dismiss(); //dismiss the dialog, manca solo di far partire loadSharedPreferences di
         }
@@ -211,14 +155,14 @@ private static final String ARG_TOTPAGES = "totPages_key";
         //set the numbers everywhere
         pb1.setProgress(progress);
         pb2.setProgress(progress);
-        dialogTextView.setText(pb1.getProgress() + "/" + totPages);
+        dialogTextView.setText(pb1.getProgress() + "/" + maxProgress);
         correctlySetMainPbProgress(mainProgressBarProgress, context);
         checkTaskCompleted(pb1, context);
 
         //save the new numbers
         if(!checkProgressBar(pb1)){//se la task non è completa (otherwise it throws an error)
 
-            int posToChange = findStringPosition(bookNames, bookName);
+            int posToChange = findTaskPosByName(tasks, taskName);
             //bookProgresses[posToChange] = String.valueOf(pb1.getProgress());
             tasks[posToChange].setCurrentProgress( pb1.getProgress() );
             saveCurrentBookProgresses(  new Gson().toJson(tasks), savedActivityData, sharedPreferences); //save the new array

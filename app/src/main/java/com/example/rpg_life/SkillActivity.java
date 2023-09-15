@@ -224,6 +224,15 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         return -1; // Return -1 if the string is not found in the array
     }
 
+    public static int findTaskPosByName(Task[] tasks, String taskName){
+        for (int i = 0; i < tasks.length; i++) {
+            if (tasks[i].name.equals(taskName)) {
+                return i; // Return the index when a match is found
+            }
+        }
+        return -1; // Return -1 if no match is found
+    }
+
 
     public void loadSharedPreferences(SharedPreferences sharedPreferences) {
 
@@ -460,7 +469,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
             public void onClick(View v) {
 
                 //apri classe dialogFragment ViewBookDialog
-                ViewBookDialog dialogFragment = ViewBookDialog.newInstance(bookName, totPages, tasks);
+                ViewBookDialog dialogFragment = ViewBookDialog.newInstance(bookName, totPages);
                 dialogFragment.setReferences(sharedPreferences, savedActivityData, SkillActivity.this, progressBar, mainProgressBar, mainProgressBarText, levelText, tl, bookView, tasks);
                 dialogFragment.show(getSupportFragmentManager(), "custom_dialog");
 
