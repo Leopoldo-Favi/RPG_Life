@@ -72,11 +72,12 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
     int maxProgressValue;
     int progressValue;
 
-    private SavedActivityData savedActivityData;
+    SavedActivityData savedActivityData;
     SharedPreferences sharedPreferences;
     private String instaceId;
     Boolean somethingSaved;
     //int[] int_currentBookProgresses;
+    Gson Gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 
     static ProgressBar mainProgressBar;
     static TextView mainProgressBarText;
@@ -257,11 +258,12 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                 //fai in modo che sia cliccabile e succeda roba sennò che palle
                 TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                bookClickArea.setOnClickListener(add_bookOnClickListener(tasks[i].name, tasks[i].getMaxProgress() , (ProgressBar) bookView.findViewById(id.progress), bookView));
+                bookClickArea.setOnClickListener(progress_taskOnClickListener(tasks[i].name, tasks[i].getMaxProgress() , (ProgressBar) bookView.findViewById(id.progress), bookView));
             }else if(tasks[i] instanceof CheckboxTask){
                 Log.d("dioporco", tasks[i].name);
                 CheckBox checkbox = (CheckBox) bookView.findViewById(id.checkBox);
                 checkbox.setChecked(((CheckboxTask) tasks[i]).isChecked);
+                checkbox.setOnCheckedChangeListener(checkbox_taskOnCheckedChangeListener((CheckboxTask) tasks[i]));
             }
         }
     }
@@ -272,7 +274,8 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         //aggiungi la nuova task
         tasks = addValueToArray(tasks, newTask);
         //trasforma in json
-        String jsonTasks = new Gson().toJson(tasks);
+        String jsonTasks = Gson.toJson(tasks);
+        Log.d("dioporcoJson", jsonTasks);
 
         //edita i file di salvataggio
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -298,7 +301,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         return new Gson().fromJson(jsonArray, type);
     }
 
-    public static Task[] jsonToTaskArray(String jsonTasks) {
+    public Task[] jsonToTaskArray(String jsonTasks) {
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter( Task[].class, new TaskArrayDeserializer() )
                 .create();
@@ -307,7 +310,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
     }
 
     //this class makes jsonToTaskArray work
-    static class TaskArrayDeserializer implements JsonDeserializer<Task[]> {
+    class TaskArrayDeserializer implements JsonDeserializer<Task[]> {
         @Override
         public Task[] deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonArray jsonArray = json.getAsJsonArray();
@@ -323,12 +326,12 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                 if (jsonObject.has("maxProgress")) { //it is a ProgressTask
                     int maxProgress = jsonObject.get("maxProgress").getAsInt();
                     int currentProgress = jsonObject.get("currentProgress").getAsInt();
-                    tasks[i] = new ProgressTask(name, rewardExperience, maxProgress, currentProgress);
+                    tasks[i] = new ProgressTask(SkillActivity.this, name, rewardExperience, maxProgress, currentProgress);
                 } else if (jsonObject.has("isChecked")) { //this is if i needed other data (CheckboxTask data for ex), for now no
                     boolean isChecked = jsonObject.get("isChecked").getAsBoolean();
-                    tasks[i] = new CheckboxTask(name, rewardExperience, isChecked);
+                    tasks[i] = new CheckboxTask(SkillActivity.this, name, rewardExperience, isChecked);
                 } else { //its not a subclass
-                    tasks[i] = new Task(name, rewardExperience, R.layout.checkbox_task); //we put checkbox_task as layout just cuz i think it doesn't really matter
+                    tasks[i] = new Task(SkillActivity.this, name, rewardExperience, R.layout.checkbox_task); //we put checkbox_task as layout just cuz i think it doesn't really matter
                 }
             }
 
@@ -396,7 +399,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                                 int newTaskMaxProgress = Integer.parseInt(newTaskMaxProgress_string);
 
-                                ProgressTask newTask = new ProgressTask(taskName, 5, newTaskMaxProgress, 0);
+                                ProgressTask newTask = new ProgressTask(SkillActivity.this, taskName, 5, newTaskMaxProgress, 0);
 
                                 View bookView = getLayoutInflater().inflate(R.layout.progress_task, null, false);
                                 tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
@@ -409,7 +412,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                                 //VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG
                                 //dai la possibilità di premere e fare roba
                                 TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                                bookClickArea.setOnClickListener(add_bookOnClickListener(taskName, newTaskMaxProgress, progressBar, bookView));
+                                bookClickArea.setOnClickListener(progress_taskOnClickListener(taskName, newTaskMaxProgress, progressBar, bookView));
 
                                 //ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK
 
@@ -438,35 +441,15 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                             if(taskName.length() > 0) { //se l'utente ha messo tutto
 
-                                CheckboxTask newTask = new CheckboxTask(taskName, 5, false);
-
                                 View bookView = getLayoutInflater().inflate(R.layout.checkbox_task, null, false);
                                 tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
+                                CheckBox checkbox = (CheckBox) bookView.findViewById(id.checkBox);
+
+                                CheckboxTask newTask = new CheckboxTask(SkillActivity.this, taskName, 5, false);
+
                                 TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
                                 bookNameView.setText(taskName);  //change the name of the book
-
-
-                                //VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG
-                                //dai la possibilità di premere e fare roba
-                                CheckBox checkbox = (CheckBox) bookView.findViewById(id.checkBox);
-                                checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                                    @Override
-                                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                                        // This method is called when the CheckBox's state changes
-
-                                        if (isChecked) {
-                                            Log.d("dioporco", "funziono");
-                                            newTask.isChecked = true;
-                                            saveCurrentTaskArray(new Gson().toJson(tasks), savedActivityData, sharedPreferences);
-                                            Toast.makeText(getApplicationContext(), "Task completed!!", Toast.LENGTH_SHORT).show();
-                                        } else {
-                                            newTask.isChecked = false;
-                                            saveCurrentTaskArray(new Gson().toJson(tasks), savedActivityData, sharedPreferences);
-                                        }
-                                    }
-                                });
-
-                                //ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK
+                                checkbox.setOnCheckedChangeListener(checkbox_taskOnCheckedChangeListener(newTask));
 
                                 //Per salvare
                                 saveBooksData(newTask);
@@ -489,16 +472,32 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         add_book_dialog.show();
     }
 
+    public CompoundButton.OnCheckedChangeListener checkbox_taskOnCheckedChangeListener(CheckboxTask checkboxTask){
+        return new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if (isChecked) {
+                    Log.d("dioporco", "funziono");
+                    checkboxTask.isChecked = true;
+                    saveCurrentTaskArray(Gson.toJson(tasks), savedActivityData, sharedPreferences);
+                    Toast.makeText(SkillActivity.this, "Task completed!!", Toast.LENGTH_SHORT).show();
+                } else {
+                    checkboxTask.isChecked = false;
+                    saveCurrentTaskArray(Gson.toJson(tasks), savedActivityData, sharedPreferences);
+                }
+            }
+        };
+    }
 
     //OnClickListener per add_book.xml
-    public View.OnClickListener add_bookOnClickListener(final String bookName, final int totPages, final ProgressBar progressBar, View bookView){ //qua invece ne prendo esattamente 1 tutto strano
+    public View.OnClickListener progress_taskOnClickListener(final String taskName, final int maxProgress, final ProgressBar progressBar, View bookView){ //qua invece ne prendo esattamente 1 tutto strano
 
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 //apri classe dialogFragment ViewBookDialog
-                ViewBookDialog dialogFragment = ViewBookDialog.newInstance(bookName, totPages);
+                ViewBookDialog dialogFragment = ViewBookDialog.newInstance(taskName, maxProgress);
                 dialogFragment.setReferences(sharedPreferences, savedActivityData, SkillActivity.this, progressBar, mainProgressBar, mainProgressBarText, levelText, tl, bookView, tasks);
                 dialogFragment.show(getSupportFragmentManager(), "custom_dialog");
 
@@ -509,10 +508,10 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
     public void saveDataForMainActivity(){
 
-        String jsonSkillNames = new Gson().toJson(skillNames);
-        String jsonProgress = new Gson().toJson(progress); //convert to json
-        String jsonLevel = new Gson().toJson(level);
-        String jsonMaxProgress = new Gson().toJson(maxProgress);
+        String jsonSkillNames = Gson.toJson(skillNames);
+        String jsonProgress = Gson.toJson(progress); //convert to json
+        String jsonLevel = Gson.toJson(level);
+        String jsonMaxProgress = Gson.toJson(maxProgress);
 
         //resave the json array
         SharedPreferences.Editor editor = mainActivitySharedPreferencesInstance.edit();

@@ -1,11 +1,15 @@
 package com.example.rpg_life;
 
+import com.google.gson.annotations.Expose;
+
 public class ProgressTask extends Task{
+    @Expose
     private int maxProgress;
+    @Expose
     private int currentProgress;
 
-    public ProgressTask(String nameP, int rewardExperienceP, int maxProgressP, int currentProgressP){//P as in parameter
-        super(nameP, rewardExperienceP, R.layout.progress_task);
+    public ProgressTask(SkillActivity sa, String nameP, int rewardExperienceP, int maxProgressP, int currentProgressP){//P as in parameter
+        super(sa, nameP, rewardExperienceP, R.layout.progress_task);
         this.maxProgress = maxProgressP;
         this.currentProgress = currentProgressP;
     }

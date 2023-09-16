@@ -27,10 +27,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 
 public class ViewBookDialog extends DialogFragment {
 
+    Gson Gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
     private static final String ARG_TASKNAME = "taskName_key";
     private static final String ARG_MAXPROGRESS = "maxProgress_key";
 
@@ -96,7 +98,7 @@ public class ViewBookDialog extends DialogFragment {
         //progress bar stuff
         final ProgressBar dialogProgressBar = (ProgressBar) rootView.findViewById(R.id.dialog_progress_bar);
         dialogProgressBar.setMax(maxProgress); //set the number of pages in the progress bar
-        Log.d("dioporco", new Gson().toJson(tasks) + " " + taskName);
+        Log.d("dioporco", Gson.toJson(tasks) + " " + taskName);
         Log.d("dioporco", String.valueOf(findTaskPosByName(tasks, taskName)));
         int progress = tasks[findTaskPosByName(tasks, taskName)].getCurrentProgress();
         dialogProgressBar.setProgress(progress); //also set the progress
@@ -137,7 +139,7 @@ public class ViewBookDialog extends DialogFragment {
             int position = findTaskPosByName(tasks, taskName);
             tasks = removeElementAtIndex(tasks, position);
 
-            String jsonTasks = new Gson().toJson(tasks);
+            String jsonTasks = Gson.toJson(tasks);
 
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString(SavedActivityData.TASKS, jsonTasks);
@@ -164,7 +166,7 @@ public class ViewBookDialog extends DialogFragment {
             int posToChange = findTaskPosByName(tasks, taskName);
             //bookProgresses[posToChange] = String.valueOf(pb1.getProgress());
             tasks[posToChange].setCurrentProgress( pb1.getProgress() );
-            saveCurrentTaskArray(  new Gson().toJson(tasks), savedActivityData, sharedPreferences); //save the new array
+            saveCurrentTaskArray(  Gson.toJson(tasks), savedActivityData, sharedPreferences); //save the new array
 
         }
 
