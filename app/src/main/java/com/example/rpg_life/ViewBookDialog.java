@@ -1,7 +1,7 @@
 package com.example.rpg_life;
 
 import static com.example.rpg_life.SkillActivity.findTaskPosByName;
-import static com.example.rpg_life.SkillActivity.saveCurrentBookProgresses;
+import static com.example.rpg_life.SkillActivity.saveCurrentTaskArray;
 import static  com.example.rpg_life.SkillActivity.correctlySetMainPbProgress;
 import static com.example.rpg_life.SkillActivity.checkProgressBar;
 import static com.example.rpg_life.SkillActivity.removeElementAtIndex;
@@ -23,7 +23,6 @@ import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.ProgressBar;
 import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -165,7 +164,7 @@ public class ViewBookDialog extends DialogFragment {
             int posToChange = findTaskPosByName(tasks, taskName);
             //bookProgresses[posToChange] = String.valueOf(pb1.getProgress());
             tasks[posToChange].setCurrentProgress( pb1.getProgress() );
-            saveCurrentBookProgresses(  new Gson().toJson(tasks), savedActivityData, sharedPreferences); //save the new array
+            saveCurrentTaskArray(  new Gson().toJson(tasks), savedActivityData, sharedPreferences); //save the new array
 
         }
 

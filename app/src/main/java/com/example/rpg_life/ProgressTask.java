@@ -5,7 +5,7 @@ public class ProgressTask extends Task{
     private int currentProgress;
 
     public ProgressTask(String nameP, int rewardExperienceP, int maxProgressP, int currentProgressP){//P as in parameter
-        super(nameP, rewardExperienceP);
+        super(nameP, rewardExperienceP, R.layout.progress_task);
         this.maxProgress = maxProgressP;
         this.currentProgress = currentProgressP;
     }

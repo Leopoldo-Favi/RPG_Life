@@ -16,6 +16,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -242,20 +244,25 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
         //NUOVO SISTEMA TASK, LE TASK EFFETTIVAMENTE APPAIONO
         for(int i=0; i<tasks.length; i++){
-            View bookView = getLayoutInflater().inflate(R.layout.progress_task, null, false);
+            View bookView = getLayoutInflater().inflate(tasks[i].taskLayout, null, false);
             tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
             TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
-            Log.d("dioporco", tasks[i].name);
             bookNameView.setText(tasks[i].name);  //change the name of the book
+            Log.d("dioporco", String.valueOf(tasks[i].getClass()));
 
+            if(tasks[i] instanceof ProgressTask){
+                ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
+                progressBar.setMax( tasks[i].getMaxProgress() ); //cambia massimo della progress bar
+                progressBar.setProgress( tasks[i].getCurrentProgress() ); //metti il progresso giusto nella progress bar
 
-            ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
-            progressBar.setMax( tasks[i].getMaxProgress() ); //cambia massimo della progress bar
-            progressBar.setProgress( tasks[i].getCurrentProgress() ); //metti il progresso giusto nella progress bar
-
-            //fai in modo che sia cliccabile e succeda roba sennò che palle
-            TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-            bookClickArea.setOnClickListener(add_bookOnClickListener(tasks[i].name, tasks[i].getMaxProgress() , (ProgressBar) bookView.findViewById(id.progress), bookView));
+                //fai in modo che sia cliccabile e succeda roba sennò che palle
+                TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
+                bookClickArea.setOnClickListener(add_bookOnClickListener(tasks[i].name, tasks[i].getMaxProgress() , (ProgressBar) bookView.findViewById(id.progress), bookView));
+            }else if(tasks[i] instanceof CheckboxTask){
+                Log.d("dioporco", tasks[i].name);
+                CheckBox checkbox = (CheckBox) bookView.findViewById(id.checkBox);
+                checkbox.setChecked(((CheckboxTask) tasks[i]).isChecked);
+            }
         }
     }
 
@@ -274,7 +281,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         editor.apply();
     }
 
-    public static void saveCurrentBookProgresses(String jsonTasks, SavedActivityData sad, SharedPreferences sharedPreferences){ //used to save the full array not just to add values one by one
+    public static void saveCurrentTaskArray(String jsonTasks, SavedActivityData sad, SharedPreferences sharedPreferences){ //used to save the full array not just to add values one by one
 
         sad.setTasks(jsonTasks);
 
@@ -299,6 +306,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         return gson.fromJson(jsonTasks, Task[].class);
     }
 
+    //this class makes jsonToTaskArray work
     static class TaskArrayDeserializer implements JsonDeserializer<Task[]> {
         @Override
         public Task[] deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
@@ -316,11 +324,11 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                     int maxProgress = jsonObject.get("maxProgress").getAsInt();
                     int currentProgress = jsonObject.get("currentProgress").getAsInt();
                     tasks[i] = new ProgressTask(name, rewardExperience, maxProgress, currentProgress);
-                } else if (jsonObject.has("propertyB")) { //this is if i needed other data (CheckboxTask data for ex), for now no
-                    //int propertyB = jsonObject.get("propertyB").getAsInt();
-                    //tasks[i] = new CheckboxTask(name, maxProgress, currentProgress, propertyB);
+                } else if (jsonObject.has("isChecked")) { //this is if i needed other data (CheckboxTask data for ex), for now no
+                    boolean isChecked = jsonObject.get("isChecked").getAsBoolean();
+                    tasks[i] = new CheckboxTask(name, rewardExperience, isChecked);
                 } else { //its not a subclass
-                    tasks[i] = new Task(name, rewardExperience);
+                    tasks[i] = new Task(name, rewardExperience, R.layout.checkbox_task); //we put checkbox_task as layout just cuz i think it doesn't really matter
                 }
             }
 
@@ -328,6 +336,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         }
     }
     AlertDialog add_book_dialog;
+    boolean isProgressTask;
     //Dialogo per mettere una nuova task
     public void createDialog(View inflatedView) {
 
@@ -343,6 +352,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         final Spinner taskTypeSelector = inflatedView.findViewById(id.spinner);
         final EditText taskMaxProgressSelector = inflatedView.findViewById(R.id.select_task_maxProgress); //EditText input utente (ex selectBookTotPages)
 
+
         taskTypeSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
@@ -353,9 +363,11 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                 if ("Add a task with a progress bar".equals(selectedCase)) {
                     // Make the invisibleLayout visible
                     taskMaxProgressSelector.setVisibility(View.VISIBLE);
+                    isProgressTask = true;
                 } else {
                     // Hide the invisibleLayout for the other case
                     taskMaxProgressSelector.setVisibility(View.GONE);
+                    isProgressTask = false;
                 }
             }
 
@@ -374,57 +386,101 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                     @Override
                     public void onClick(View v) {
 
-                        /*
-                        final String bookName = selectBookName.getText().toString(); //prendi il testo scritto dall'utente
-                        String totPages_string = selectBookTotPages.getText().toString(); //non so se questo serve
-                        */
-
                         final String taskName = taskNameSelector.getText().toString(); //prendi il testo scritto dall'utente
-                        int newTaskMaxProgress = Integer.parseInt(taskMaxProgressSelector.getText().toString() );  //non so se questo serve
 
-                        ProgressTask newTask = new ProgressTask(taskName, 5, newTaskMaxProgress, 0);
-                        //final String json
+                        if(isProgressTask){
+
+                            String newTaskMaxProgress_string = taskMaxProgressSelector.getText().toString(); //questo serve per non avere beghe se l'utente non lo mette
+
+                            if(taskName.length() > 0 && newTaskMaxProgress_string.length() > 0) { //se l'utente ha messo tutto
+
+                                int newTaskMaxProgress = Integer.parseInt(newTaskMaxProgress_string);
+
+                                ProgressTask newTask = new ProgressTask(taskName, 5, newTaskMaxProgress, 0);
+
+                                View bookView = getLayoutInflater().inflate(R.layout.progress_task, null, false);
+                                tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
+                                TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
+                                bookNameView.setText(taskName);  //change the name of the book
+                                final ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
+                                progressBar.setMax(newTaskMaxProgress); //set the number of pages in the progress bar
 
 
-                                // DA QUI CAMBIAMENTI
-                        if(taskName.length() > 0 && newTaskMaxProgress > 0) { //se l'utente ha messo tutto
+                                //VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG
+                                //dai la possibilità di premere e fare roba
+                                TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
+                                bookClickArea.setOnClickListener(add_bookOnClickListener(taskName, newTaskMaxProgress, progressBar, bookView));
 
-                            View bookView = getLayoutInflater().inflate(R.layout.progress_task, null, false);
-                            tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
-                            TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
-                            bookNameView.setText(taskName);  //change the name of the book
-                            final ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
-                            progressBar.setMax(newTaskMaxProgress); //set the number of pages in the progress bar
+                                //ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK
+
+                                //Per salvare
+                                saveBooksData(newTask);
+
+                                add_book_dialog.dismiss(); //esci dal dialogo solo se c'è effitamente un nome
+
+                                //ERRORI
+                            } else if(taskName.length() > 0){
+                                taskMaxProgressSelector.setHint("You must enter the number of pages number here"); //dai un errore se non viene scelto un numero di pagine
+                                taskMaxProgressSelector.setHintTextColor(Color.RED);
+
+                            } else if (newTaskMaxProgress_string.length() > 0){
+                                taskNameSelector.setHint("You must enter the name of your book"); //dai un errore se non viene scelto nessun nome
+                                taskNameSelector.setHintTextColor(Color.RED);
+
+                            } else { //dai entrambi gli errori
+                                taskMaxProgressSelector.setHint("You must enter the number of pages number here");
+                                taskMaxProgressSelector.setHintTextColor(Color.RED);
+
+                                taskNameSelector.setHint("You must enter the name of your book");
+                                taskNameSelector.setHintTextColor(Color.RED);
+                            }
+                        }else if(!isProgressTask){
+
+                            if(taskName.length() > 0) { //se l'utente ha messo tutto
+
+                                CheckboxTask newTask = new CheckboxTask(taskName, 5, false);
+
+                                View bookView = getLayoutInflater().inflate(R.layout.checkbox_task, null, false);
+                                tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
+                                TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
+                                bookNameView.setText(taskName);  //change the name of the book
 
 
-                            //VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG
-                            //dai la possibilità di premere e fare roba
-                            TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                            bookClickArea.setOnClickListener(add_bookOnClickListener(taskName, newTaskMaxProgress, progressBar, bookView));
+                                //VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG
+                                //dai la possibilità di premere e fare roba
+                                CheckBox checkbox = (CheckBox) bookView.findViewById(id.checkBox);
+                                checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                                    @Override
+                                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                        // This method is called when the CheckBox's state changes
 
-        //ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK
+                                        if (isChecked) {
+                                            Log.d("dioporco", "funziono");
+                                            newTask.isChecked = true;
+                                            saveCurrentTaskArray(new Gson().toJson(tasks), savedActivityData, sharedPreferences);
+                                            Toast.makeText(getApplicationContext(), "Task completed!!", Toast.LENGTH_SHORT).show();
+                                        } else {
+                                            newTask.isChecked = false;
+                                            saveCurrentTaskArray(new Gson().toJson(tasks), savedActivityData, sharedPreferences);
+                                        }
+                                    }
+                                });
 
-                            //Per salvare
-                            saveBooksData(newTask);
+                                //ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK
 
-                            add_book_dialog.dismiss(); //esci dal dialogo solo se c'è effitamente un nome
+                                //Per salvare
+                                saveBooksData(newTask);
 
-                        //ERRORI
-                        } else if(taskName.length() > 0){
-                            taskMaxProgressSelector.setHint("You must enter the number of pages number here"); //dai un errore se non viene scelto un numero di pagine
-                            taskMaxProgressSelector.setHintTextColor(Color.RED);
+                                add_book_dialog.dismiss(); //esci dal dialogo solo se c'è effitamente un nome
 
-                        } else if (newTaskMaxProgress > 0){
-                            taskNameSelector.setHint("You must enter the name of your book"); //dai un errore se non viene scelto nessun nome
-                            taskNameSelector.setHintTextColor(Color.RED);
-
-                        } else { //dai entrambi gli errori
-                            taskMaxProgressSelector.setHint("You must enter the number of pages number here");
-                            taskMaxProgressSelector.setHintTextColor(Color.RED);
-
-                            taskNameSelector.setHint("You must enter the name of your book");
-                            taskNameSelector.setHintTextColor(Color.RED);
+                                //ERRORI
+                            } else {
+                                taskNameSelector.setHint("You must enter the name of your task"); //dai un errore se non viene scelto nessun nome
+                                taskNameSelector.setHintTextColor(Color.RED);
+                            }
                         }
+
+
                     }
                 });
             }

@@ -4,11 +4,13 @@ public class Task{
 
     String name;
     int rewardExperience;
+    int taskLayout;
     // type? date; ??
 
-    public Task(String nameP, int rewardExperienceP){ //P as in parameter
-        name = nameP;
-        rewardExperience = rewardExperienceP;
+    public Task(String nameP, int rewardExperienceP, int taskLayoutP){ //P as in parameter
+        this.name = nameP;
+        this.rewardExperience = rewardExperienceP;
+        this.taskLayout = taskLayoutP;
     }
 
    //REFERENCE FUNCTIONS

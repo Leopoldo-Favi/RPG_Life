@@ -4,7 +4,9 @@ import android.util.Log;
 
 public class CheckboxTask extends Task{
 
-    public CheckboxTask(String nameP, int rewardExperienceP){
-        super(nameP, rewardExperienceP);
+    boolean isChecked = false;
+    public CheckboxTask(String nameP, int rewardExperienceP, boolean isCheckedP){
+        super(nameP, rewardExperienceP, R.layout.checkbox_task);
+        this.isChecked = isCheckedP;
     }
 }
