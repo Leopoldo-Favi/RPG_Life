@@ -9,18 +9,25 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/select_book_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Please select the name of the book" />
-
         <Spinner
             android:id="@+id/spinner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Choose an option"
             android:entries="@array/spinner_options" ></Spinner>
+
+        <EditText
+            android:id="@+id/select_book_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Please select the name of the book" />
+
+        <EditText
+            android:id="@+id/select_task_rewardExperience"
+            android:inputType="number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="How much experience should the task give" />
 
         <EditText
             android:id="@+id/select_task_maxProgress"

@@ -247,7 +247,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         for(int i=0; i<tasks.length; i++){
             View bookView = getLayoutInflater().inflate(tasks[i].taskLayout, null, false);
             tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
-            TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
+            TextView bookNameView = (TextView) bookView.findViewById(id.task_name);
             bookNameView.setText(tasks[i].name);  //change the name of the book
             Log.d("dioporco", String.valueOf(tasks[i].getClass()));
 
@@ -258,7 +258,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                 //fai in modo che sia cliccabile e succeda roba sennò che palle
                 TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                bookClickArea.setOnClickListener(progress_taskOnClickListener(tasks[i].name, tasks[i].getMaxProgress() , (ProgressBar) bookView.findViewById(id.progress), bookView));
+                bookClickArea.setOnClickListener(progress_taskOnClickListener(tasks[i].name, tasks[i].getMaxProgress(), tasks[i].rewardExp, (ProgressBar) bookView.findViewById(id.progress), bookView));
             }else if(tasks[i] instanceof CheckboxTask){
                 Log.d("dioporco", tasks[i].name);
                 CheckBox checkbox = (CheckBox) bookView.findViewById(id.checkBox);
@@ -321,7 +321,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                 //common properties for all tasks
                 String name = jsonObject.get("name").getAsString();
-                int rewardExperience = jsonObject.get("rewardExperience").getAsInt();
+                int rewardExperience = jsonObject.get("rewardExp").getAsInt();
 
                 if (jsonObject.has("maxProgress")) { //it is a ProgressTask
                     int maxProgress = jsonObject.get("maxProgress").getAsInt();
@@ -339,7 +339,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         }
     }
     AlertDialog add_book_dialog;
-    boolean isProgressTask;
+    boolean isProgressTask; //we need this later in the definition of positive button
     //Dialogo per mettere una nuova task
     public void createDialog(View inflatedView) {
 
@@ -351,12 +351,12 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                 .setPositiveButton("add", null) //è null ma lo definiamo dopo
                 .create();
 
-        final EditText taskNameSelector = inflatedView.findViewById(R.id.select_book_name); //EditText input utente (ex selectBookName)
         final Spinner taskTypeSelector = inflatedView.findViewById(id.spinner);
+        final EditText taskNameSelector = inflatedView.findViewById(R.id.select_book_name); //EditText input utente (ex selectBookName)
+        final EditText taskRewardExpSelector = inflatedView.findViewById(id.select_task_rewardExperience);
         final EditText taskMaxProgressSelector = inflatedView.findViewById(R.id.select_task_maxProgress); //EditText input utente (ex selectBookTotPages)
 
-
-        taskTypeSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        taskTypeSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() { //Fai vedere taskMaxProgressSelector solo se l'utente vuole creare una ProgressTask
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 // Check which case is selected
@@ -390,6 +390,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                     public void onClick(View v) {
 
                         final String taskName = taskNameSelector.getText().toString(); //prendi il testo scritto dall'utente
+                        final int rewardExperience = Integer.parseInt(taskRewardExpSelector.getText().toString());
 
                         if(isProgressTask){
 
@@ -399,11 +400,11 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                                 int newTaskMaxProgress = Integer.parseInt(newTaskMaxProgress_string);
 
-                                ProgressTask newTask = new ProgressTask(SkillActivity.this, taskName, 5, newTaskMaxProgress, 0);
+                                ProgressTask newTask = new ProgressTask(SkillActivity.this, taskName, rewardExperience, newTaskMaxProgress, 0);
 
                                 View bookView = getLayoutInflater().inflate(R.layout.progress_task, null, false);
                                 tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
-                                TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
+                                TextView bookNameView = (TextView) bookView.findViewById(id.task_name);
                                 bookNameView.setText(taskName);  //change the name of the book
                                 final ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
                                 progressBar.setMax(newTaskMaxProgress); //set the number of pages in the progress bar
@@ -412,7 +413,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                                 //VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG
                                 //dai la possibilità di premere e fare roba
                                 TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                                bookClickArea.setOnClickListener(progress_taskOnClickListener(taskName, newTaskMaxProgress, progressBar, bookView));
+                                bookClickArea.setOnClickListener(progress_taskOnClickListener(taskName, newTaskMaxProgress, rewardExperience, progressBar, bookView));
 
                                 //ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK
 
@@ -445,9 +446,9 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                                 tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
                                 CheckBox checkbox = (CheckBox) bookView.findViewById(id.checkBox);
 
-                                CheckboxTask newTask = new CheckboxTask(SkillActivity.this, taskName, 5, false);
+                                CheckboxTask newTask = new CheckboxTask(SkillActivity.this, taskName, rewardExperience, false);
 
-                                TextView bookNameView = (TextView) bookView.findViewById(id.book_name);
+                                TextView bookNameView = (TextView) bookView.findViewById(id.task_name);
                                 bookNameView.setText(taskName);  //change the name of the book
                                 checkbox.setOnCheckedChangeListener(checkbox_taskOnCheckedChangeListener(newTask));
 
@@ -462,8 +463,6 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                                 taskNameSelector.setHintTextColor(Color.RED);
                             }
                         }
-
-
                     }
                 });
             }
@@ -479,18 +478,22 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                 if (isChecked) {
                     Log.d("dioporco", "funziono");
                     checkboxTask.isChecked = true;
-                    saveCurrentTaskArray(Gson.toJson(tasks), savedActivityData, sharedPreferences);
+                    saveCurrentTaskArray(Gson.toJson(tasks), savedActivityData, sharedPreferences); //cambia isChecked attribute e salva
+
+                    correctlySetMainPbProgress(mainProgressBar.getProgress() + checkboxTask.rewardExp, SkillActivity.this); //add experience to mainProgressBar
                     Toast.makeText(SkillActivity.this, "Task completed!!", Toast.LENGTH_SHORT).show();
                 } else {
                     checkboxTask.isChecked = false;
                     saveCurrentTaskArray(Gson.toJson(tasks), savedActivityData, sharedPreferences);
+
+                    correctlySetMainPbProgress(mainProgressBar.getProgress() - checkboxTask.rewardExp, SkillActivity.this); //get rid of the same experience if the user unchecks the checkbox
                 }
             }
         };
     }
 
     //OnClickListener per add_book.xml
-    public View.OnClickListener progress_taskOnClickListener(final String taskName, final int maxProgress, final ProgressBar progressBar, View bookView){ //qua invece ne prendo esattamente 1 tutto strano
+    public View.OnClickListener progress_taskOnClickListener(final String taskName, final int maxProgress, final int rewardExp, final ProgressBar progressBar, View bookView){ //qua invece ne prendo esattamente 1 tutto strano
 
         return new View.OnClickListener() {
             @Override
@@ -498,7 +501,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                 //apri classe dialogFragment ViewBookDialog
                 ViewBookDialog dialogFragment = ViewBookDialog.newInstance(taskName, maxProgress);
-                dialogFragment.setReferences(sharedPreferences, savedActivityData, SkillActivity.this, progressBar, mainProgressBar, mainProgressBarText, levelText, tl, bookView, tasks);
+                dialogFragment.setReferences(sharedPreferences, savedActivityData, SkillActivity.this, progressBar, mainProgressBar, mainProgressBarText, levelText, tl, bookView, tasks, rewardExp);
                 dialogFragment.show(getSupportFragmentManager(), "custom_dialog");
 
             }

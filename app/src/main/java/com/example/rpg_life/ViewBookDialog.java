@@ -60,7 +60,6 @@ public class ViewBookDialog extends DialogFragment {
     public static ViewBookDialog newInstance(String taskName, int totPages /*String[] bookNames, String[] bookProgress, String[] bookPages, Task[] tasks*/) {
         ViewBookDialog fragment = new ViewBookDialog();
         Bundle args = new Bundle();
-
         args.putString(ARG_TASKNAME, taskName);
         args.putInt(ARG_MAXPROGRESS, totPages);
         fragment.setArguments(args);
@@ -69,7 +68,7 @@ public class ViewBookDialog extends DialogFragment {
     }
 
     //prendi dati da skillActivity
-    public void setReferences(SharedPreferences sharedPreferences, SavedActivityData savedActivityData, SkillActivity context, ProgressBar progressBar, ProgressBar mainProgressBar, TextView mainProgressBarText, TextView levelText, TableLayout tl, View bookView, Task[] tasks){
+    public void setReferences(SharedPreferences sharedPreferences, SavedActivityData savedActivityData, SkillActivity context, ProgressBar progressBar, ProgressBar mainProgressBar, TextView mainProgressBarText, TextView levelText, TableLayout tl, View bookView, Task[] tasks, int rewardExperience){
         this.sharedPreferences = sharedPreferences;
         this.savedActivityData = savedActivityData;
         this.context = context;
@@ -80,6 +79,7 @@ public class ViewBookDialog extends DialogFragment {
         this.tl = tl;
         this.bookView = bookView;
         this.tasks = tasks;
+        this.taskCompletedReward = rewardExperience;
     }
 
     @Override

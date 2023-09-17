@@ -1,7 +1,5 @@
 package com.example.rpg_life;
 
-import android.content.SharedPreferences;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -14,7 +12,7 @@ public class Task{
     @Expose
     String name;
     @Expose
-    int rewardExperience;
+    int rewardExp;
     @Expose
     int taskLayout;
     // type? date; ??
@@ -25,7 +23,7 @@ public class Task{
 
         //other attributes
         this.name = nameP;
-        this.rewardExperience = rewardExperienceP;
+        this.rewardExp = rewardExperienceP;
         this.taskLayout = taskLayoutP;
     }
 

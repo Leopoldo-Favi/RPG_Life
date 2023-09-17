@@ -8,7 +8,7 @@
         android:id="@+id/tableRow">
 
         <TextView
-            android:id="@+id/book_name"
+            android:id="@+id/task_name"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:text="libro 1"
