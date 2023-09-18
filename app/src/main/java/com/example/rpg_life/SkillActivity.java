@@ -338,6 +338,9 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
             return tasks;
         }
     }
+
+
+
     AlertDialog add_book_dialog;
     boolean isProgressTask; //we need this later in the definition of positive button
     //Dialogo per mettere una nuova task
@@ -356,6 +359,8 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         final EditText taskRewardExpSelector = inflatedView.findViewById(id.select_task_rewardExperience);
         final EditText taskMaxProgressSelector = inflatedView.findViewById(R.id.select_task_maxProgress); //EditText input utente (ex selectBookTotPages)
 
+        final EditText[][] selectors = {{taskNameSelector, taskRewardExpSelector, taskMaxProgressSelector}}; //doppio array per non dare errore?
+
         taskTypeSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() { //Fai vedere taskMaxProgressSelector solo se l'utente vuole creare una ProgressTask
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
@@ -367,10 +372,12 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                     // Make the invisibleLayout visible
                     taskMaxProgressSelector.setVisibility(View.VISIBLE);
                     isProgressTask = true;
+                    selectors[0] = new EditText[]{taskNameSelector, taskRewardExpSelector, taskMaxProgressSelector}; //make sure taskMaxProgressSelector is inside the selectors array
                 } else {
                     // Hide the invisibleLayout for the other case
                     taskMaxProgressSelector.setVisibility(View.GONE);
                     isProgressTask = false;
+                    selectors[0] = new EditText[]{taskNameSelector, taskRewardExpSelector}; //get taskMaxProgressSelector out of the selectors array
                 }
             }
 
@@ -389,79 +396,64 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                     @Override
                     public void onClick(View v) {
 
-                        final String taskName = taskNameSelector.getText().toString(); //prendi il testo scritto dall'utente
-                        final int rewardExperience = Integer.parseInt(taskRewardExpSelector.getText().toString());
+                        Task newTask;
+                        View taskView;
 
-                        if(isProgressTask){
+                        boolean[] inputsPresentArray = new boolean[selectors[0].length];
+                        boolean inputsPresents = true;
+                        for(int i=0; i<selectors[0].length; i++){ //controlla se tutti gli imput hanno qualcosa
 
-                            String newTaskMaxProgress_string = taskMaxProgressSelector.getText().toString(); //questo serve per non avere beghe se l'utente non lo mette
+                            inputsPresentArray[i] = true; //first start by assuming that it is true
 
-                            if(taskName.length() > 0 && newTaskMaxProgress_string.length() > 0) { //se l'utente ha messo tutto
+                            if(selectors[0][i].getText().toString().length() == 0){
 
+                                inputsPresentArray[i] = false;
+
+                                selectors[0][i].setHint("Enter something"); //dai un errore se non viene scelto un numero di pagine
+                                selectors[0][i].setHintTextColor(Color.RED);
+                            }
+                        }
+                        for (boolean value : inputsPresentArray) { //se tutte sono vere inputsPresent restera vero
+                            if (!value) {
+                                inputsPresents = false; // Found a false value, not all are true
+                            }
+                        }
+
+                        if(inputsPresents){ //if the user put everything in
+
+                            final String taskName = taskNameSelector.getText().toString(); //prendi il testo scritto dall'utente
+                            final int rewardExperience = Integer.parseInt(taskRewardExpSelector.getText().toString());
+
+                            if(isProgressTask){
+                                taskView = getLayoutInflater().inflate(R.layout.progress_task, null, false);
+
+                                String newTaskMaxProgress_string = taskMaxProgressSelector.getText().toString(); //questo serve per non avere beghe se l'utente non lo mette
                                 int newTaskMaxProgress = Integer.parseInt(newTaskMaxProgress_string);
 
-                                ProgressTask newTask = new ProgressTask(SkillActivity.this, taskName, rewardExperience, newTaskMaxProgress, 0);
+                                newTask = new ProgressTask(SkillActivity.this, taskName, rewardExperience, newTaskMaxProgress, 0);
 
-                                View bookView = getLayoutInflater().inflate(R.layout.progress_task, null, false);
-                                tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
-                                TextView bookNameView = (TextView) bookView.findViewById(id.task_name);
-                                bookNameView.setText(taskName);  //change the name of the book
-                                final ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
+                                final ProgressBar progressBar = (ProgressBar) taskView.findViewById(id.progress);
                                 progressBar.setMax(newTaskMaxProgress); //set the number of pages in the progress bar
 
+                                TableRow taskClickArea = (TableRow) taskView.findViewById(id.tableRow); //now you can actually click the task to get info about it and perform actions
+                                taskClickArea.setOnClickListener(progress_taskOnClickListener(taskName, newTaskMaxProgress, rewardExperience, progressBar, taskView));
 
-                                //VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG//VIEW_BOOK_DIALOG
-                                //dai la possibilità di premere e fare roba
-                                TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                                bookClickArea.setOnClickListener(progress_taskOnClickListener(taskName, newTaskMaxProgress, rewardExperience, progressBar, bookView));
+                            }else{
+                                taskView = getLayoutInflater().inflate(R.layout.checkbox_task, null, false);
 
-                                //ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK//ADD_TASK
+                                newTask = new CheckboxTask(SkillActivity.this, taskName, rewardExperience, false);
 
-                                //Per salvare
-                                saveBooksData(newTask);
-
-                                add_book_dialog.dismiss(); //esci dal dialogo solo se c'è effitamente un nome
-
-                                //ERRORI
-                            } else if(taskName.length() > 0){
-                                taskMaxProgressSelector.setHint("You must enter the number of pages number here"); //dai un errore se non viene scelto un numero di pagine
-                                taskMaxProgressSelector.setHintTextColor(Color.RED);
-
-                            } else if (newTaskMaxProgress_string.length() > 0){
-                                taskNameSelector.setHint("You must enter the name of your book"); //dai un errore se non viene scelto nessun nome
-                                taskNameSelector.setHintTextColor(Color.RED);
-
-                            } else { //dai entrambi gli errori
-                                taskMaxProgressSelector.setHint("You must enter the number of pages number here");
-                                taskMaxProgressSelector.setHintTextColor(Color.RED);
-
-                                taskNameSelector.setHint("You must enter the name of your book");
-                                taskNameSelector.setHintTextColor(Color.RED);
+                                CheckBox checkbox = (CheckBox) taskView.findViewById(id.checkBox);
+                                checkbox.setOnCheckedChangeListener(checkbox_taskOnCheckedChangeListener((CheckboxTask) newTask));
                             }
-                        }else if(!isProgressTask){
 
-                            if(taskName.length() > 0) { //se l'utente ha messo tutto
+                            tl.addView(taskView, tl.getChildCount() - 1); //add the view but not at the top of the page
+                            TextView bookNameView = (TextView) taskView.findViewById(id.task_name);
+                            bookNameView.setText(taskName);  //change the name of the book
 
-                                View bookView = getLayoutInflater().inflate(R.layout.checkbox_task, null, false);
-                                tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
-                                CheckBox checkbox = (CheckBox) bookView.findViewById(id.checkBox);
+                            saveBooksData(newTask); //Per salvare
 
-                                CheckboxTask newTask = new CheckboxTask(SkillActivity.this, taskName, rewardExperience, false);
-
-                                TextView bookNameView = (TextView) bookView.findViewById(id.task_name);
-                                bookNameView.setText(taskName);  //change the name of the book
-                                checkbox.setOnCheckedChangeListener(checkbox_taskOnCheckedChangeListener(newTask));
-
-                                //Per salvare
-                                saveBooksData(newTask);
-
-                                add_book_dialog.dismiss(); //esci dal dialogo solo se c'è effitamente un nome
-
-                                //ERRORI
-                            } else {
-                                taskNameSelector.setHint("You must enter the name of your task"); //dai un errore se non viene scelto nessun nome
-                                taskNameSelector.setHintTextColor(Color.RED);
-                            }
+                            add_book_dialog.dismiss(); //esci dal dialogo
                         }
                     }
                 });
@@ -507,7 +499,6 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
             }
         };
     }
-
 
     public void saveDataForMainActivity(){
 
