@@ -46,6 +46,7 @@ import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 
 public class SkillActivity extends AppCompatActivity implements CallLoadSharedPreferences {
 
@@ -79,9 +80,9 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
     //int[] int_currentBookProgresses;
     Gson Gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 
-    static ProgressBar mainProgressBar;
-    static TextView mainProgressBarText;
-    static TextView levelText;
+    public static ProgressBar mainProgressBar;
+    public static TextView mainProgressBarText;
+    public static TextView levelText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +96,12 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         levelValue = getIntent().getStringExtra("levelValue");
         maxProgressValue = getIntent().getIntExtra("maxProgressValue", 250);
         progressValue = getIntent().getIntExtra("progressValue", 0);
+
+        //progress bar
+        mainProgressBar = (ProgressBar) findViewById(id.activity_pb);
+        mainProgressBarText = (TextView) findViewById(id.activity_pb_text);
+        correctlySetMainPbMax(maxProgressValue);
+        correctlySetMainPbProgress(progressValue, SkillActivity.this);
 
         //per salvare e cancellare
         mainActivityInstance = MainActivity.getMainActivityInstance();
@@ -131,12 +138,6 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         //level text
         levelText = (TextView) findViewById(id.LevelText);
         levelText.setText(levelValue);
-
-        //progress bar
-        mainProgressBar = (ProgressBar) findViewById(id.activity_pb);
-        mainProgressBarText = (TextView) findViewById(id.activity_pb_text);
-        correctlySetMainPbMax(maxProgressValue);
-        correctlySetMainPbProgress(progressValue, SkillActivity.this);
 
 
         //button for adding tasks
@@ -258,7 +259,8 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                 //fai in modo che sia cliccabile e succeda roba sennò che palle
                 TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                bookClickArea.setOnClickListener(progress_taskOnClickListener(tasks[i].name, tasks[i].getMaxProgress(), tasks[i].rewardExp, (ProgressBar) bookView.findViewById(id.progress), bookView));
+                bookClickArea.setOnClickListener(((ProgressTask) tasks[i]).onClickListener(tasks[i].name, tasks[i].getMaxProgress(), tasks[i].rewardExp, (ProgressBar) bookView.findViewById(id.progress), bookView));
+                //bookClickArea.setOnClickListener(progress_taskOnClickListener(tasks[i].name, tasks[i].getMaxProgress(), tasks[i].rewardExp, (ProgressBar) bookView.findViewById(id.progress), bookView));
             }else if(tasks[i] instanceof CheckboxTask){
                 Log.d("dioporco", tasks[i].name);
                 CheckBox checkbox = (CheckBox) bookView.findViewById(id.checkBox);
@@ -326,12 +328,12 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                 if (jsonObject.has("maxProgress")) { //it is a ProgressTask
                     int maxProgress = jsonObject.get("maxProgress").getAsInt();
                     int currentProgress = jsonObject.get("currentProgress").getAsInt();
-                    tasks[i] = new ProgressTask(SkillActivity.this, name, rewardExperience, maxProgress, currentProgress);
+                    tasks[i] = new ProgressTask(SkillActivity.this, name, rewardExperience, maxProgress, currentProgress,  mainProgressBar, mainProgressBarText, levelText);
                 } else if (jsonObject.has("isChecked")) { //this is if i needed other data (CheckboxTask data for ex), for now no
                     boolean isChecked = jsonObject.get("isChecked").getAsBoolean();
-                    tasks[i] = new CheckboxTask(SkillActivity.this, name, rewardExperience, isChecked);
+                    tasks[i] = new CheckboxTask(SkillActivity.this, name, rewardExperience, isChecked,  mainProgressBar, mainProgressBarText, levelText);
                 } else { //its not a subclass
-                    tasks[i] = new Task(SkillActivity.this, name, rewardExperience, R.layout.checkbox_task); //we put checkbox_task as layout just cuz i think it doesn't really matter
+                    tasks[i] = new Task(SkillActivity.this, name, rewardExperience, R.layout.checkbox_task,  mainProgressBar, mainProgressBarText, levelText); //we put checkbox_task as layout just cuz i think it doesn't really matter
                 }
             }
 
@@ -398,6 +400,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                         Task newTask;
                         View taskView;
+                        View.OnClickListener taskOnClickListener;
 
                         boolean[] inputsPresentArray = new boolean[selectors[0].length];
                         boolean inputsPresents = true;
@@ -427,29 +430,35 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                             if(isProgressTask){
                                 taskView = getLayoutInflater().inflate(R.layout.progress_task, null, false);
 
-                                String newTaskMaxProgress_string = taskMaxProgressSelector.getText().toString(); //questo serve per non avere beghe se l'utente non lo mette
-                                int newTaskMaxProgress = Integer.parseInt(newTaskMaxProgress_string);
+                                int newTaskMaxProgress = Integer.parseInt(taskMaxProgressSelector.getText().toString());
 
-                                newTask = new ProgressTask(SkillActivity.this, taskName, rewardExperience, newTaskMaxProgress, 0);
+                                newTask = new ProgressTask(SkillActivity.this, taskName, rewardExperience, newTaskMaxProgress, 0, mainProgressBar, mainProgressBarText, levelText);
 
                                 final ProgressBar progressBar = (ProgressBar) taskView.findViewById(id.progress);
                                 progressBar.setMax(newTaskMaxProgress); //set the number of pages in the progress bar
 
-                                TableRow taskClickArea = (TableRow) taskView.findViewById(id.tableRow); //now you can actually click the task to get info about it and perform actions
-                                taskClickArea.setOnClickListener(progress_taskOnClickListener(taskName, newTaskMaxProgress, rewardExperience, progressBar, taskView));
+                                taskOnClickListener = ((ProgressTask) newTask).onClickListener(taskName, newTaskMaxProgress, rewardExperience, progressBar, taskView);
 
-                            }else{
+                                TableRow taskClickArea = (TableRow) taskView.findViewById(id.tableRow); //now you can actually click the task to get info about it and perform actions
+                                taskClickArea.setOnClickListener(taskOnClickListener);
+
+                            }else{ //its a CheckboxTask
                                 taskView = getLayoutInflater().inflate(R.layout.checkbox_task, null, false);
 
-                                newTask = new CheckboxTask(SkillActivity.this, taskName, rewardExperience, false);
+                                newTask = new CheckboxTask(SkillActivity.this, taskName, rewardExperience, false, mainProgressBar, mainProgressBarText, levelText);
 
                                 CheckBox checkbox = (CheckBox) taskView.findViewById(id.checkBox);
                                 checkbox.setOnCheckedChangeListener(checkbox_taskOnCheckedChangeListener((CheckboxTask) newTask));
+
+                                //taskOnClickListener = progress_taskOnClickListener(taskName, newTaskMaxProgress, rewardExperience, progressBar, taskView);
                             }
 
                             tl.addView(taskView, tl.getChildCount() - 1); //add the view but not at the top of the page
                             TextView bookNameView = (TextView) taskView.findViewById(id.task_name);
                             bookNameView.setText(taskName);  //change the name of the book
+
+                            //TableRow taskClickArea = (TableRow) taskView.findViewById(id.tableRow); //now you can actually click the task to get info about it and perform actions
+                            //taskClickArea.setOnClickListener(taskOnClickListener);
 
                             saveBooksData(newTask); //Per salvare
 
@@ -484,21 +493,6 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         };
     }
 
-    //OnClickListener per add_book.xml
-    public View.OnClickListener progress_taskOnClickListener(final String taskName, final int maxProgress, final int rewardExp, final ProgressBar progressBar, View bookView){ //qua invece ne prendo esattamente 1 tutto strano
-
-        return new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                //apri classe dialogFragment ViewBookDialog
-                ViewBookDialog dialogFragment = ViewBookDialog.newInstance(taskName, maxProgress);
-                dialogFragment.setReferences(sharedPreferences, savedActivityData, SkillActivity.this, progressBar, mainProgressBar, mainProgressBarText, levelText, tl, bookView, tasks, rewardExp);
-                dialogFragment.show(getSupportFragmentManager(), "custom_dialog");
-
-            }
-        };
-    }
 
     public void saveDataForMainActivity(){
 
