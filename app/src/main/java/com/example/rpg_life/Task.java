@@ -40,7 +40,7 @@ public class Task{
         SAsavedActivityData = skillActivityInstance.savedActivityData;
         SAtl = skillActivityInstance.tl;
         SAtasks = skillActivityInstance.tasks;
-        Log.d("dioporcoTask", Arrays.toString(skillActivityInstance.tasks));
+        Log.d("dioporcoTask", String.valueOf(skillActivityInstance));
         SAmainProgressBar = SAmainProgressBarP;
         SAmainProgressBarText = SAmainProgressBarTextP;
         SAlevelText = SAlevelTextP;

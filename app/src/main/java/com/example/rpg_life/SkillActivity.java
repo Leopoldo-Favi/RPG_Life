@@ -46,7 +46,6 @@ import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 
 public class SkillActivity extends AppCompatActivity implements CallLoadSharedPreferences {
 
@@ -62,6 +61,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
     static SavedData mainActivitySavedDataInstance;
     SharedPreferences mainActivitySharedPreferencesInstance;
     MainActivity mainActivityInstance;
+    boolean firstSkillActivity;
     String[] skillNames;
     String[] level;
     Integer[] maxProgress;
@@ -96,15 +96,16 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         levelValue = getIntent().getStringExtra("levelValue");
         maxProgressValue = getIntent().getIntExtra("maxProgressValue", 250);
         progressValue = getIntent().getIntExtra("progressValue", 0);
+        firstSkillActivity = getIntent().getBooleanExtra("firstSkillActivity", false); //only if the intent comes from MainActivity this is true
 
         //progress bar
-        mainProgressBar = (ProgressBar) findViewById(id.activity_pb);
-        mainProgressBarText = (TextView) findViewById(id.activity_pb_text);
+        mainProgressBar = findViewById(id.activity_pb);
+        mainProgressBarText = findViewById(id.activity_pb_text);
         correctlySetMainPbMax(maxProgressValue);
         correctlySetMainPbProgress(progressValue, SkillActivity.this);
 
         //per salvare e cancellare
-        mainActivityInstance = MainActivity.getMainActivityInstance();
+        mainActivityInstance = new MainActivity().getMainActivityInstance();
         mainActivitySavedDataInstance = mainActivityInstance.getSavedDataInstance();
         mainActivitySharedPreferencesInstance = mainActivityInstance.getSharedPreferencesInstance();
 
@@ -113,17 +114,17 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         sharedPreferences = getApplicationContext().getSharedPreferences("MyPrefs_" + instaceId, Context.MODE_PRIVATE); //apro lo stesso file di SharedPreferences
         loadSharedPreferences(sharedPreferences);
 
-        skillNames = jsonToStringArray(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.NAMES_OF_ADDED_VIEWS, "[]"));
-        level = jsonToStringArray(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.LEVEL_OF_ADDED_VIEWS, "[]"));
-        maxProgress = new Gson().fromJson(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.MAX_PROGRESS_OF_ADDED_VIEWS, "[]"), new TypeToken<Integer[]>() {}.getType());
-        progress = jsonToStringArray(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.PROGRESS_OF_ADDED_VIEWS, "[]"));
+        skillNames = jsonToStringArray(mainActivitySharedPreferencesInstance.getString(SavedData.NAMES_OF_ADDED_VIEWS, "[]"));
+        level = jsonToStringArray(mainActivitySharedPreferencesInstance.getString(SavedData.LEVEL_OF_ADDED_VIEWS, "[]"));
+        maxProgress = new Gson().fromJson(mainActivitySharedPreferencesInstance.getString(SavedData.MAX_PROGRESS_OF_ADDED_VIEWS, "[]"), new TypeToken<Integer[]>() {}.getType());
+        progress = jsonToStringArray(mainActivitySharedPreferencesInstance.getString(SavedData.PROGRESS_OF_ADDED_VIEWS, "[]"));
 
         //toolbar
-        Toolbar actionBar = (Toolbar) findViewById(R.id.ActionBar);
+        Toolbar actionBar = findViewById(id.ActionBar);
         setSupportActionBar(actionBar);
 
         //title textview
-        TextView title = (TextView) findViewById(R.id.Title);
+        TextView title = findViewById(id.Title);
         title.setText(titleValue);
 
         /*
@@ -136,7 +137,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
 
         //level text
-        levelText = (TextView) findViewById(id.LevelText);
+        levelText = findViewById(id.LevelText);
         levelText.setText(levelValue);
 
 
@@ -158,8 +159,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         int currentProgress = pb.getProgress();
         int max = pb.getMax();
 
-        if(currentProgress >= max){  return true; }
-        else{ return false; }
+        return currentProgress >= max;
     }
 
     public static int getLevelInt(String textViewString){ //this is specific for the level textView in activity.skill_xml
@@ -248,24 +248,25 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         for(int i=0; i<tasks.length; i++){
             View bookView = getLayoutInflater().inflate(tasks[i].taskLayout, null, false);
             tl.addView(bookView, tl.getChildCount() - 1); //add the view but not at the top of the page
-            TextView bookNameView = (TextView) bookView.findViewById(id.task_name);
+            TextView bookNameView = bookView.findViewById(id.task_name);
             bookNameView.setText(tasks[i].name);  //change the name of the book
-            Log.d("dioporco", String.valueOf(tasks[i].getClass()));
+            TableRow taskClickArea = bookView.findViewById(id.tableRow); //take the tableRow object so that you can click the task
 
+            //CONSIDER USING FUNCTIONS FOR THESE THINGS SINCE YOU DO THEM 2 TIMES (ONE HERE AND ONE WHEN ACTUALLY CREATING THE TASK)
             if(tasks[i] instanceof ProgressTask){
-                ProgressBar progressBar = (ProgressBar) bookView.findViewById(id.progress);
+                ProgressBar progressBar = bookView.findViewById(id.progress);
                 progressBar.setMax( tasks[i].getMaxProgress() ); //cambia massimo della progress bar
                 progressBar.setProgress( tasks[i].getCurrentProgress() ); //metti il progresso giusto nella progress bar
 
-                //fai in modo che sia cliccabile e succeda roba sennò che palle
-                TableRow bookClickArea = (TableRow) bookView.findViewById(id.tableRow);
-                bookClickArea.setOnClickListener(((ProgressTask) tasks[i]).onClickListener(tasks[i].name, tasks[i].getMaxProgress(), tasks[i].rewardExp, (ProgressBar) bookView.findViewById(id.progress), bookView));
+                taskClickArea.setOnClickListener(((ProgressTask) tasks[i]).onClickListener(tasks[i].name, tasks[i].getMaxProgress(), tasks[i].rewardExp, bookView.findViewById(id.progress), bookView));
                 //bookClickArea.setOnClickListener(progress_taskOnClickListener(tasks[i].name, tasks[i].getMaxProgress(), tasks[i].rewardExp, (ProgressBar) bookView.findViewById(id.progress), bookView));
             }else if(tasks[i] instanceof CheckboxTask){
                 Log.d("dioporco", tasks[i].name);
-                CheckBox checkbox = (CheckBox) bookView.findViewById(id.checkBox);
+                CheckBox checkbox = bookView.findViewById(id.checkBox);
                 checkbox.setChecked(((CheckboxTask) tasks[i]).isChecked);
                 checkbox.setOnCheckedChangeListener(checkbox_taskOnCheckedChangeListener((CheckboxTask) tasks[i]));
+
+                taskClickArea.setOnClickListener(((CheckboxTask) tasks[i]).onClickListener(SkillActivity.class, tasks[i].name, "Level 1"));
             }
         }
     }
@@ -389,11 +390,11 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
             }
         });
 
-        //definisci positive button
+        //define positive button
         add_book_dialog.setOnShowListener(new DialogInterface.OnShowListener() {
             @Override
             public void onShow(DialogInterface dialogInterface) {
-                Button button = ((AlertDialog) add_book_dialog).getButton(AlertDialog.BUTTON_POSITIVE);
+                Button button = add_book_dialog.getButton(AlertDialog.BUTTON_POSITIVE);
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -419,6 +420,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                         for (boolean value : inputsPresentArray) { //se tutte sono vere inputsPresent restera vero
                             if (!value) {
                                 inputsPresents = false; // Found a false value, not all are true
+                                break;
                             }
                         }
 
@@ -434,31 +436,28 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
 
                                 newTask = new ProgressTask(SkillActivity.this, taskName, rewardExperience, newTaskMaxProgress, 0, mainProgressBar, mainProgressBarText, levelText);
 
-                                final ProgressBar progressBar = (ProgressBar) taskView.findViewById(id.progress);
+                                final ProgressBar progressBar = taskView.findViewById(id.progress);
                                 progressBar.setMax(newTaskMaxProgress); //set the number of pages in the progress bar
 
                                 taskOnClickListener = ((ProgressTask) newTask).onClickListener(taskName, newTaskMaxProgress, rewardExperience, progressBar, taskView);
-
-                                TableRow taskClickArea = (TableRow) taskView.findViewById(id.tableRow); //now you can actually click the task to get info about it and perform actions
-                                taskClickArea.setOnClickListener(taskOnClickListener);
 
                             }else{ //its a CheckboxTask
                                 taskView = getLayoutInflater().inflate(R.layout.checkbox_task, null, false);
 
                                 newTask = new CheckboxTask(SkillActivity.this, taskName, rewardExperience, false, mainProgressBar, mainProgressBarText, levelText);
 
-                                CheckBox checkbox = (CheckBox) taskView.findViewById(id.checkBox);
+                                CheckBox checkbox = taskView.findViewById(id.checkBox);
                                 checkbox.setOnCheckedChangeListener(checkbox_taskOnCheckedChangeListener((CheckboxTask) newTask));
 
-                                //taskOnClickListener = progress_taskOnClickListener(taskName, newTaskMaxProgress, rewardExperience, progressBar, taskView);
+                                taskOnClickListener = ((CheckboxTask) newTask).onClickListener(SkillActivity.class, newTask.name, "Level 1");
                             }
 
                             tl.addView(taskView, tl.getChildCount() - 1); //add the view but not at the top of the page
-                            TextView bookNameView = (TextView) taskView.findViewById(id.task_name);
+                            TextView bookNameView = taskView.findViewById(id.task_name);
                             bookNameView.setText(taskName);  //change the name of the book
 
-                            //TableRow taskClickArea = (TableRow) taskView.findViewById(id.tableRow); //now you can actually click the task to get info about it and perform actions
-                            //taskClickArea.setOnClickListener(taskOnClickListener);
+                            TableRow taskClickArea = taskView.findViewById(id.tableRow); //now you can actually click the task to get info about it and perform actions
+                            taskClickArea.setOnClickListener(taskOnClickListener);
 
                             saveBooksData(newTask); //Per salvare
 
@@ -515,27 +514,30 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
         // This code is executed before returning to MainActivity and is used to save changes
         //first you modify the arrays then call saveDataForMainActivity
 
-        int totActivityProgress = mainProgressBar.getProgress(); //progress from the main progress bar
-        int pbMax = mainProgressBar.getMax();
+        if(firstSkillActivity){
 
-        int position = findStringPosition(jsonToStringArray(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.NAMES_OF_ADDED_VIEWS, "[]")), titleValue);
+            int totActivityProgress = mainProgressBar.getProgress(); //progress from the main progress bar
+            int pbMax = mainProgressBar.getMax();
 
-        //String[] level = jsonToStringArray(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.LEVEL_OF_ADDED_VIEWS, "[]"));
-        level[position] = (String) levelText.getText();
+            int position = findStringPosition(jsonToStringArray(mainActivitySharedPreferencesInstance.getString(SavedData.NAMES_OF_ADDED_VIEWS, "[]")), titleValue);
 
-        //int[] maxProgress = new Gson().fromJson(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.MAX_PROGRESS_OF_ADDED_VIEWS, "[]"), new TypeToken<int[]>() {}.getType());
-        maxProgress[position] = pbMax;
+            //String[] level = jsonToStringArray(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.LEVEL_OF_ADDED_VIEWS, "[]"));
+            level[position] = (String) levelText.getText();
 
-        //set the right position of the mainActivity savedData array to the actual value (totActivityProgress)
-        //String[] progress = jsonToStringArray(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.PROGRESS_OF_ADDED_VIEWS, "[]"));
-        progress[position] = Integer.toString(totActivityProgress);
+            //int[] maxProgress = new Gson().fromJson(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.MAX_PROGRESS_OF_ADDED_VIEWS, "[]"), new TypeToken<int[]>() {}.getType());
+            maxProgress[position] = pbMax;
 
-        saveDataForMainActivity();
+            //set the right position of the mainActivity savedData array to the actual value (totActivityProgress)
+            //String[] progress = jsonToStringArray(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.PROGRESS_OF_ADDED_VIEWS, "[]"));
+            progress[position] = Integer.toString(totActivityProgress);
+
+            saveDataForMainActivity();
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
-    public void onBackPressed() {
+    public void onBackPressed() { //code here needs to be the same as some lines down
 
         goingBackToMainActivity();
         super.onBackPressed();
@@ -565,7 +567,7 @@ public class SkillActivity extends AppCompatActivity implements CallLoadSharedPr
                 File preferencesFile = new File(getFilesDir().getParent() + "/shared_prefs/", "MyPrefs_" + instaceId + ".xml");
                 preferencesFile.delete();
 
-                int position = findStringPosition(jsonToStringArray(mainActivitySharedPreferencesInstance.getString(mainActivitySavedDataInstance.NAMES_OF_ADDED_VIEWS, "[]")), titleValue);
+                int position = findStringPosition(jsonToStringArray(mainActivitySharedPreferencesInstance.getString(SavedData.NAMES_OF_ADDED_VIEWS, "[]")), titleValue);
                 skillNames = removeElementAtIndex(skillNames, position);
                 level = removeElementAtIndex(level, position);
                 maxProgress = removeElementAtIndex(maxProgress, position);

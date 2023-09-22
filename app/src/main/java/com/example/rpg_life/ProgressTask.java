@@ -27,7 +27,6 @@ public class ProgressTask extends Task{
 
     //OnClickListener per add_book.xml
     public View.OnClickListener onClickListener(final String taskName, final int maxProgress, final int rewardExp, final ProgressBar progressBar, View bookView){ //qua invece ne prendo esattamente 1 tutto strano
-
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {

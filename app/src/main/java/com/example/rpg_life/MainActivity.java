@@ -94,6 +94,7 @@ public class MainActivity extends AppCompatActivity{
         comingFromAnotherActivity = true;
     }
 
+
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -319,6 +320,7 @@ public class MainActivity extends AppCompatActivity{
                 intent.putExtra("levelValue", levelValue);
                 intent.putExtra("maxProgressValue", maxProgress[findStringPosition(names, title)]);
                 intent.putExtra("progressValue", Integer.parseInt(progress[findStringPosition(names, title)]));
+                intent.putExtra("firstSkillActivity", true);
 
                 startActivity(intent);
             }
